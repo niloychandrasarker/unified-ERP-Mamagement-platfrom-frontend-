@@ -38,6 +38,12 @@ export const uploadToImageKit = async (fileOrBase64, folder = 'general', fileNam
     targetName = `${targetName}.jpg`;
   }
 
+  const response = await api.post('/upload', {
+    file: base64Data,
+    fileName: targetName,
+    folder
+  });
+
   const uploadData = response.data?.data || response.data;
   const directUrl = typeof uploadData === 'string' ? uploadData : (uploadData?.url || uploadData?.secure_url || '');
   const result = new String(directUrl);
