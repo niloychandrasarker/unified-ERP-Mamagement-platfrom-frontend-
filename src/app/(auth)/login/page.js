@@ -9,7 +9,7 @@ import { useLanguage } from '@/lib/language';
 import {
   School, Lock, Eye, EyeOff, ShieldCheck, CheckCircle2,
   Sparkles, AlertCircle, ArrowRight, Mail, BookOpen,
-  Users, UserCheck, KeyRound, HelpCircle, PhoneCall
+  Users, UserCheck, HelpCircle, PhoneCall
 } from 'lucide-react';
 
 export default function LoginPage() {
@@ -73,12 +73,6 @@ export default function LoginPage() {
 
   const detectedRole = getDetectedRole();
 
-  // One-click quick fill for testing
-  const handleFillDemo = (email, password) => {
-    setFormData({ email, password });
-    setErrors({});
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     const newErrors = {};
@@ -102,7 +96,10 @@ export default function LoginPage() {
       toast.success(isBn ? 'লগইন সফল হয়েছে! স্বাগতম।' : 'Login successful! Welcome back.');
       router.push('/dashboard');
     } catch (error) {
-      const msg = error.response?.data?.message || (isBn ? 'ভুল ইমেইল বা পাসওয়ার্ড প্রদান করা হয়েছে' : 'Invalid email or password provided');
+      const isNetworkError = !error.response || error.code === 'ERR_NETWORK';
+      const msg = isNetworkError
+        ? (isBn ? 'সার্ভারের সাথে সংযোগ পাওয়া যাচ্ছে না। ব্যাকএন্ড সার্ভার চালু আছে কিনা নিশ্চিত করুন।' : 'Cannot connect to backend server. Please verify backend is running on port 5000.')
+        : (error.response?.data?.message || (isBn ? 'ভুল ইমেইল বা পাসওয়ার্ড প্রদান করা হয়েছে' : 'Invalid email or password provided'));
       setErrors({ form: msg });
       toast.error(msg);
     } finally {
@@ -313,33 +310,6 @@ export default function LoginPage() {
                 </p>
               </div>
 
-              {/* Quick Demo Access Chips for Fast Evaluation */}
-              <div className="mb-6 bg-slate-50 p-3.5 rounded-2xl border border-slate-200/80 space-y-2">
-                <div className="flex items-center justify-between text-[11px] font-bold text-slate-600">
-                  <span className="flex items-center gap-1.5">
-                    <KeyRound size={13} className="text-blue-600" />
-                    {isBn ? 'কুইক ডেমো এক্সেস (এক ক্লিকে পূরণ করুন):' : 'Quick Demo Fill (Click to evaluate):'}
-                  </span>
-                </div>
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handleFillDemo('admin@uemp.com', 'Admin@123456')}
-                    className="px-3 py-1.5 bg-white hover:bg-purple-50 hover:text-purple-700 hover:border-purple-300 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-2xs transition-all flex items-center gap-1.5"
-                  >
-                    <ShieldCheck size={13} className="text-purple-600" />
-                    <span>Super Admin</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleFillDemo('principal@school.edu.bd', 'Principal@123')}
-                    className="px-3 py-1.5 bg-white hover:bg-blue-50 hover:text-blue-700 hover:border-blue-300 border border-slate-200 rounded-xl text-xs font-bold text-slate-700 shadow-2xs transition-all flex items-center gap-1.5"
-                  >
-                    <School size={13} className="text-blue-600" />
-                    <span>Principal (Admin)</span>
-                  </button>
-                </div>
-              </div>
 
               {/* Error banner if any */}
               {errors.form && (
