@@ -1,0 +1,201 @@
+name,class,section,gender,guardian_name,guardian_phone,address
+Tasnim Zaman,Class 1,Section A,MALE,Saiful Bhuiyan,01721314159,Shantinagar Dhaka
+Nowshin Khan,Class 1,Section A,FEMALE,Golam Uddin,01811628318,Khilgaon Dhaka
+Jubair Bhuiyan,Class 1,Section A,MALE,Azizul Miah,01821942477,Malibagh Dhaka
+Fatima Tasnim,Class 1,Section A,FEMALE,Iqbal Alam,01912256636,Moghbazar Dhaka
+Imran Hossain,Class 1,Section A,MALE,Mizanur Ali,01922570795,Baily Road Dhaka
+Tahmina Rahman,Class 1,Section A,FEMALE,Harun Siddique,01612884954,Siddheswari Dhaka
+Hasan Miah,Class 1,Section A,MALE,Kamal Talukder,01623199113,Dhanmondi Dhaka
+Hafsa Begum,Class 1,Section A,FEMALE,Jalal Hawlader,01513513272,Mirpur 10 Dhaka
+Adnan Rahman,Class 1,Section A,MALE,Sirajul Patwary,01313827431,Mirpur 2 Dhaka
+Sabrina Jahan,Class 1,Section A,FEMALE,Shahidul Majumder,01714141590,Uttara Sector 4 Dhaka
+Zahir Ali,Class 1,Section B,MALE,Mahmud Zaman,01724455749,Uttara Sector 7 Dhaka
+Roshni Chowdhury,Class 1,Section B,FEMALE,Enamul Haque,01814769908,Mohammadpur Dhaka
+Farhan Chowdhury,Class 1,Section B,MALE,Abul Hossain,01825084067,Banani Dhaka
+Zarin Zaman,Class 1,Section B,FEMALE,Rafiqul Ahmed,01915398226,Gulshan 1 Dhaka
+Abrar Talukder,Class 1,Section B,MALE,Mostafa Rahman,01925712385,Baridhara Dhaka
+Bushra Khatun,Class 1,Section B,FEMALE,Nurul Islam,01616026544,Basabo Dhaka
+Sadman Mahmud,Class 1,Section B,MALE,Mohammad Chowdhury,01626340703,Rampura Dhaka
+Fariha Khan,Class 1,Section B,FEMALE,Shafiqul Karim,01516654862,Badda Dhaka
+Tamim Patwary,Class 1,Section B,MALE,Ashraful Mahmud,01316969021,Lalbagh Dhaka
+Poushi Tasnim,Class 1,Section B,FEMALE,Khorshed Hasan,01717283180,Wari Dhaka
+Istiak Khan,Class 2,Section A,MALE,Nazmul Khan,01727597339,Jatrabari Dhaka
+Tasfia Rahman,Class 2,Section A,FEMALE,Monirul Sarker,01817911498,Farmgate Dhaka
+Nabil Zaman,Class 2,Section A,MALE,Zillur Bhuiyan,01828225657,Tejgaon Dhaka
+Orpa Begum,Class 2,Section A,FEMALE,Abdul Uddin,01918539816,Motijheel C/A Dhaka
+Wasif Bhuiyan,Class 2,Section A,MALE,Saiful Miah,01928853975,Shantinagar Dhaka
+Tanjila Jahan,Class 2,Section A,FEMALE,Golam Alam,01619168134,Khilgaon Dhaka
+Samiul Hossain,Class 2,Section A,MALE,Azizul Ali,01629482293,Malibagh Dhaka
+Tabassum Chowdhury,Class 2,Section A,FEMALE,Iqbal Siddique,01519796452,Moghbazar Dhaka
+Shanto Miah,Class 2,Section A,MALE,Mizanur Talukder,01311110611,Baily Road Dhaka
+Nusrat Zaman,Class 2,Section A,FEMALE,Harun Hawlader,01711424770,Siddheswari Dhaka
+Shakib Rahman,Class 2,Section B,MALE,Kamal Patwary,01721738929,Dhanmondi Dhaka
+Sarah Khatun,Class 2,Section B,FEMALE,Jalal Majumder,01812053088,Mirpur 10 Dhaka
+Mehedi Ali,Class 2,Section B,MALE,Sirajul Zaman,01822367247,Mirpur 2 Dhaka
+Shaila Khan,Class 2,Section B,FEMALE,Shahidul Haque,01912681406,Uttara Sector 4 Dhaka
+Fahim Chowdhury,Class 2,Section B,MALE,Mahmud Hossain,01922995565,Uttara Sector 7 Dhaka
+Raisa Tasnim,Class 2,Section B,FEMALE,Enamul Ahmed,01613309724,Mohammadpur Dhaka
+Alvee Talukder,Class 2,Section B,MALE,Abul Rahman,01623623883,Banani Dhaka
+Labiba Rahman,Class 2,Section B,FEMALE,Rafiqul Islam,01513938042,Gulshan 1 Dhaka
+Shahriar Mahmud,Class 2,Section B,MALE,Mostafa Chowdhury,01314252201,Baridhara Dhaka
+Lamia Begum,Class 2,Section B,FEMALE,Nurul Karim,01714566360,Basabo Dhaka
+Tanim Patwary,Class 3,Section A,MALE,Mohammad Mahmud,01724880519,Rampura Dhaka
+Mariya Jahan,Class 3,Section A,FEMALE,Shafiqul Hasan,01815194678,Badda Dhaka
+Nahian Khan,Class 3,Section A,MALE,Ashraful Khan,01825508837,Lalbagh Dhaka
+Maliha Chowdhury,Class 3,Section A,FEMALE,Khorshed Sarker,01915822996,Wari Dhaka
+Faisal Zaman,Class 3,Section A,MALE,Nazmul Bhuiyan,01926137155,Jatrabari Dhaka
+Samira Zaman,Class 3,Section A,FEMALE,Monirul Uddin,01616451314,Farmgate Dhaka
+Ashiq Bhuiyan,Class 3,Section A,MALE,Zillur Miah,01626765473,Tejgaon Dhaka
+Samia Khatun,Class 3,Section A,FEMALE,Abdul Alam,01517079632,Motijheel C/A Dhaka
+Ayan Hossain,Class 3,Section A,MALE,Saiful Ali,01317393791,Shantinagar Dhaka
+Nowshin Khan,Class 3,Section A,FEMALE,Golam Siddique,01717707950,Khilgaon Dhaka
+Tasnim Miah,Class 3,Section B,MALE,Azizul Talukder,01728022109,Malibagh Dhaka
+Fatima Tasnim,Class 3,Section B,FEMALE,Iqbal Hawlader,01818336268,Moghbazar Dhaka
+Jubair Rahman,Class 3,Section B,MALE,Mizanur Patwary,01828650427,Baily Road Dhaka
+Tahmina Rahman,Class 3,Section B,FEMALE,Harun Majumder,01918964586,Siddheswari Dhaka
+Imran Ali,Class 3,Section B,MALE,Kamal Zaman,01929278745,Dhanmondi Dhaka
+Hafsa Begum,Class 3,Section B,FEMALE,Jalal Haque,01619592904,Mirpur 10 Dhaka
+Hasan Chowdhury,Class 3,Section B,MALE,Sirajul Hossain,01629907063,Mirpur 2 Dhaka
+Sabrina Jahan,Class 3,Section B,FEMALE,Shahidul Ahmed,01511221222,Uttara Sector 4 Dhaka
+Adnan Talukder,Class 3,Section B,MALE,Mahmud Rahman,01311535381,Uttara Sector 7 Dhaka
+Roshni Chowdhury,Class 3,Section B,FEMALE,Enamul Islam,01711849540,Mohammadpur Dhaka
+Zahir Mahmud,Class 4,Section A,MALE,Abul Chowdhury,01722163699,Banani Dhaka
+Zarin Zaman,Class 4,Section A,FEMALE,Rafiqul Karim,01812477858,Gulshan 1 Dhaka
+Farhan Patwary,Class 4,Section A,MALE,Mostafa Mahmud,01822792017,Baridhara Dhaka
+Bushra Khatun,Class 4,Section A,FEMALE,Nurul Hasan,01913106176,Basabo Dhaka
+Abrar Khan,Class 4,Section A,MALE,Mohammad Khan,01923420335,Rampura Dhaka
+Fariha Khan,Class 4,Section A,FEMALE,Shafiqul Sarker,01613734494,Badda Dhaka
+Sadman Zaman,Class 4,Section A,MALE,Ashraful Bhuiyan,01624048653,Lalbagh Dhaka
+Poushi Tasnim,Class 4,Section A,FEMALE,Khorshed Uddin,01514362812,Wari Dhaka
+Tamim Bhuiyan,Class 4,Section A,MALE,Nazmul Miah,01314676971,Jatrabari Dhaka
+Tasfia Rahman,Class 4,Section A,FEMALE,Monirul Alam,01714991130,Farmgate Dhaka
+Istiak Hossain,Class 4,Section B,MALE,Zillur Ali,01725305289,Tejgaon Dhaka
+Orpa Begum,Class 4,Section B,FEMALE,Abdul Siddique,01815619448,Motijheel C/A Dhaka
+Nabil Miah,Class 4,Section B,MALE,Saiful Talukder,01825933607,Shantinagar Dhaka
+Tanjila Jahan,Class 4,Section B,FEMALE,Golam Hawlader,01916247766,Khilgaon Dhaka
+Wasif Rahman,Class 4,Section B,MALE,Azizul Patwary,01926561925,Malibagh Dhaka
+Tabassum Chowdhury,Class 4,Section B,FEMALE,Iqbal Majumder,01616876084,Moghbazar Dhaka
+Samiul Ali,Class 4,Section B,MALE,Mizanur Zaman,01627190243,Baily Road Dhaka
+Nusrat Zaman,Class 4,Section B,FEMALE,Harun Haque,01517504402,Siddheswari Dhaka
+Shanto Chowdhury,Class 4,Section B,MALE,Kamal Hossain,01317818561,Dhanmondi Dhaka
+Sarah Khatun,Class 4,Section B,FEMALE,Jalal Ahmed,01718132720,Mirpur 10 Dhaka
+Shakib Talukder,Class 5,Section A,MALE,Sirajul Rahman,01728446879,Mirpur 2 Dhaka
+Shaila Khan,Class 5,Section A,FEMALE,Shahidul Islam,01818761038,Uttara Sector 4 Dhaka
+Mehedi Mahmud,Class 5,Section A,MALE,Mahmud Chowdhury,01829075197,Uttara Sector 7 Dhaka
+Raisa Tasnim,Class 5,Section A,FEMALE,Enamul Karim,01919389356,Mohammadpur Dhaka
+Fahim Patwary,Class 5,Section A,MALE,Abul Mahmud,01929703515,Banani Dhaka
+Labiba Rahman,Class 5,Section A,FEMALE,Rafiqul Hasan,01611017674,Gulshan 1 Dhaka
+Alvee Khan,Class 5,Section A,MALE,Mostafa Khan,01621331833,Baridhara Dhaka
+Lamia Begum,Class 5,Section A,FEMALE,Nurul Sarker,01511645992,Basabo Dhaka
+Shahriar Zaman,Class 5,Section A,MALE,Mohammad Bhuiyan,01311960151,Rampura Dhaka
+Mariya Jahan,Class 5,Section A,FEMALE,Shafiqul Uddin,01712274310,Badda Dhaka
+Tanim Bhuiyan,Class 5,Section B,MALE,Ashraful Miah,01722588469,Lalbagh Dhaka
+Maliha Chowdhury,Class 5,Section B,FEMALE,Khorshed Alam,01812902628,Wari Dhaka
+Nahian Hossain,Class 5,Section B,MALE,Nazmul Ali,01823216787,Jatrabari Dhaka
+Samira Zaman,Class 5,Section B,FEMALE,Monirul Siddique,01913530946,Farmgate Dhaka
+Faisal Miah,Class 5,Section B,MALE,Zillur Talukder,01923845105,Tejgaon Dhaka
+Samia Khatun,Class 5,Section B,FEMALE,Abdul Hawlader,01614159264,Motijheel C/A Dhaka
+Ashiq Rahman,Class 5,Section B,MALE,Saiful Patwary,01624473423,Shantinagar Dhaka
+Nowshin Khan,Class 5,Section B,FEMALE,Golam Majumder,01514787582,Khilgaon Dhaka
+Ayan Ali,Class 5,Section B,MALE,Azizul Zaman,01315101741,Malibagh Dhaka
+Fatima Tasnim,Class 5,Section B,FEMALE,Iqbal Haque,01715415900,Moghbazar Dhaka
+Tasnim Chowdhury,Class 6,Section A,MALE,Mizanur Hossain,01725730059,Baily Road Dhaka
+Tahmina Rahman,Class 6,Section A,FEMALE,Harun Ahmed,01816044218,Siddheswari Dhaka
+Jubair Talukder,Class 6,Section A,MALE,Kamal Rahman,01826358377,Dhanmondi Dhaka
+Hafsa Begum,Class 6,Section A,FEMALE,Jalal Islam,01916672536,Mirpur 10 Dhaka
+Imran Mahmud,Class 6,Section A,MALE,Sirajul Chowdhury,01926986695,Mirpur 2 Dhaka
+Sabrina Jahan,Class 6,Section A,FEMALE,Shahidul Karim,01617300854,Uttara Sector 4 Dhaka
+Hasan Patwary,Class 6,Section A,MALE,Mahmud Mahmud,01627615013,Uttara Sector 7 Dhaka
+Roshni Chowdhury,Class 6,Section A,FEMALE,Enamul Hasan,01517929172,Mohammadpur Dhaka
+Adnan Khan,Class 6,Section A,MALE,Abul Khan,01318243331,Banani Dhaka
+Zarin Zaman,Class 6,Section A,FEMALE,Rafiqul Sarker,01718557490,Gulshan 1 Dhaka
+Zahir Zaman,Class 6,Section B,MALE,Mostafa Bhuiyan,01728871649,Baridhara Dhaka
+Bushra Khatun,Class 6,Section B,FEMALE,Nurul Uddin,01819185808,Basabo Dhaka
+Farhan Bhuiyan,Class 6,Section B,MALE,Mohammad Miah,01829499967,Rampura Dhaka
+Fariha Khan,Class 6,Section B,FEMALE,Shafiqul Alam,01919814126,Badda Dhaka
+Abrar Hossain,Class 6,Section B,MALE,Ashraful Ali,01921128285,Lalbagh Dhaka
+Poushi Tasnim,Class 6,Section B,FEMALE,Khorshed Siddique,01611442444,Wari Dhaka
+Sadman Miah,Class 6,Section B,MALE,Nazmul Talukder,01621756603,Jatrabari Dhaka
+Tasfia Rahman,Class 6,Section B,FEMALE,Monirul Hawlader,01512070762,Farmgate Dhaka
+Tamim Rahman,Class 6,Section B,MALE,Zillur Patwary,01312384921,Tejgaon Dhaka
+Orpa Begum,Class 6,Section B,FEMALE,Abdul Majumder,01712699080,Motijheel C/A Dhaka
+Istiak Ali,Class 7,Section A,MALE,Saiful Zaman,01723013239,Shantinagar Dhaka
+Tanjila Jahan,Class 7,Section A,FEMALE,Golam Haque,01813327398,Khilgaon Dhaka
+Nabil Chowdhury,Class 7,Section A,MALE,Azizul Hossain,01823641557,Malibagh Dhaka
+Tabassum Chowdhury,Class 7,Section A,FEMALE,Iqbal Ahmed,01913955716,Moghbazar Dhaka
+Wasif Talukder,Class 7,Section A,MALE,Mizanur Rahman,01924269875,Baily Road Dhaka
+Nusrat Zaman,Class 7,Section A,FEMALE,Harun Islam,01614584034,Siddheswari Dhaka
+Samiul Mahmud,Class 7,Section A,MALE,Kamal Chowdhury,01624898193,Dhanmondi Dhaka
+Sarah Khatun,Class 7,Section A,FEMALE,Jalal Karim,01515212352,Mirpur 10 Dhaka
+Shanto Patwary,Class 7,Section A,MALE,Sirajul Mahmud,01315526511,Mirpur 2 Dhaka
+Shaila Khan,Class 7,Section A,FEMALE,Shahidul Hasan,01715840670,Uttara Sector 4 Dhaka
+Shakib Khan,Class 7,Section B,MALE,Mahmud Khan,01726154829,Uttara Sector 7 Dhaka
+Raisa Tasnim,Class 7,Section B,FEMALE,Enamul Sarker,01816468988,Mohammadpur Dhaka
+Mehedi Zaman,Class 7,Section B,MALE,Abul Bhuiyan,01826783147,Banani Dhaka
+Labiba Rahman,Class 7,Section B,FEMALE,Rafiqul Uddin,01917097306,Gulshan 1 Dhaka
+Fahim Bhuiyan,Class 7,Section B,MALE,Mostafa Miah,01927411465,Baridhara Dhaka
+Lamia Begum,Class 7,Section B,FEMALE,Nurul Alam,01617725624,Basabo Dhaka
+Alvee Hossain,Class 7,Section B,MALE,Mohammad Ali,01628039783,Rampura Dhaka
+Mariya Jahan,Class 7,Section B,FEMALE,Shafiqul Siddique,01518353942,Badda Dhaka
+Shahriar Miah,Class 7,Section B,MALE,Ashraful Talukder,01318668101,Lalbagh Dhaka
+Maliha Chowdhury,Class 7,Section B,FEMALE,Khorshed Hawlader,01718982260,Wari Dhaka
+Tanim Rahman,Class 8,Section A,MALE,Nazmul Patwary,01729296419,Jatrabari Dhaka
+Samira Zaman,Class 8,Section A,FEMALE,Monirul Majumder,01819610578,Farmgate Dhaka
+Nahian Ali,Class 8,Section A,MALE,Zillur Zaman,01829924737,Tejgaon Dhaka
+Samia Khatun,Class 8,Section A,FEMALE,Abdul Haque,01911238896,Motijheel C/A Dhaka
+Faisal Chowdhury,Class 8,Section A,MALE,Saiful Hossain,01921553055,Shantinagar Dhaka
+Nowshin Khan,Class 8,Section A,FEMALE,Golam Ahmed,01611867214,Khilgaon Dhaka
+Ashiq Talukder,Class 8,Section A,MALE,Azizul Rahman,01622181373,Malibagh Dhaka
+Fatima Tasnim,Class 8,Section A,FEMALE,Iqbal Islam,01512495532,Moghbazar Dhaka
+Ayan Mahmud,Class 8,Section A,MALE,Mizanur Chowdhury,01312809691,Baily Road Dhaka
+Tahmina Rahman,Class 8,Section A,FEMALE,Harun Karim,01713123850,Siddheswari Dhaka
+Tasnim Patwary,Class 8,Section B,MALE,Kamal Mahmud,01723438009,Dhanmondi Dhaka
+Hafsa Begum,Class 8,Section B,FEMALE,Jalal Hasan,01813752168,Mirpur 10 Dhaka
+Jubair Khan,Class 8,Section B,MALE,Sirajul Khan,01824066327,Mirpur 2 Dhaka
+Sabrina Jahan,Class 8,Section B,FEMALE,Shahidul Sarker,01914380486,Uttara Sector 4 Dhaka
+Imran Zaman,Class 8,Section B,MALE,Mahmud Bhuiyan,01924694645,Uttara Sector 7 Dhaka
+Roshni Chowdhury,Class 8,Section B,FEMALE,Enamul Uddin,01615008804,Mohammadpur Dhaka
+Hasan Bhuiyan,Class 8,Section B,MALE,Abul Miah,01625322963,Banani Dhaka
+Zarin Zaman,Class 8,Section B,FEMALE,Rafiqul Alam,01515637122,Gulshan 1 Dhaka
+Adnan Hossain,Class 8,Section B,MALE,Mostafa Ali,01315951281,Baridhara Dhaka
+Bushra Khatun,Class 8,Section B,FEMALE,Nurul Siddique,01716265440,Basabo Dhaka
+Zahir Miah,Class 9,Section A,MALE,Mohammad Talukder,01726579599,Rampura Dhaka
+Fariha Khan,Class 9,Section A,FEMALE,Shafiqul Hawlader,01816893758,Badda Dhaka
+Farhan Rahman,Class 9,Section A,MALE,Ashraful Patwary,01827207917,Lalbagh Dhaka
+Poushi Tasnim,Class 9,Section A,FEMALE,Khorshed Majumder,01917522076,Wari Dhaka
+Abrar Ali,Class 9,Section A,MALE,Nazmul Zaman,01927836235,Jatrabari Dhaka
+Tasfia Rahman,Class 9,Section A,FEMALE,Monirul Haque,01618150394,Farmgate Dhaka
+Sadman Chowdhury,Class 9,Section A,MALE,Zillur Hossain,01628464553,Tejgaon Dhaka
+Orpa Begum,Class 9,Section A,FEMALE,Abdul Ahmed,01518778712,Motijheel C/A Dhaka
+Tamim Talukder,Class 9,Section A,MALE,Saiful Rahman,01319092871,Shantinagar Dhaka
+Tanjila Jahan,Class 9,Section A,FEMALE,Golam Islam,01719407030,Khilgaon Dhaka
+Istiak Mahmud,Class 9,Section B,MALE,Azizul Chowdhury,01729721189,Malibagh Dhaka
+Tabassum Chowdhury,Class 9,Section B,FEMALE,Iqbal Karim,01811035348,Moghbazar Dhaka
+Nabil Patwary,Class 9,Section B,MALE,Mizanur Mahmud,01821349507,Baily Road Dhaka
+Nusrat Zaman,Class 9,Section B,FEMALE,Harun Hasan,01911663666,Siddheswari Dhaka
+Wasif Khan,Class 9,Section B,MALE,Kamal Khan,01921977825,Dhanmondi Dhaka
+Sarah Khatun,Class 9,Section B,FEMALE,Jalal Sarker,01612291984,Mirpur 10 Dhaka
+Samiul Zaman,Class 9,Section B,MALE,Sirajul Bhuiyan,01622606143,Mirpur 2 Dhaka
+Shaila Khan,Class 9,Section B,FEMALE,Shahidul Uddin,01512920302,Uttara Sector 4 Dhaka
+Shanto Bhuiyan,Class 9,Section B,MALE,Mahmud Miah,01313234461,Uttara Sector 7 Dhaka
+Raisa Tasnim,Class 9,Section B,FEMALE,Enamul Alam,01713548620,Mohammadpur Dhaka
+Shakib Hossain,Class 10,Section A,MALE,Abul Ali,01723862779,Banani Dhaka
+Labiba Rahman,Class 10,Section A,FEMALE,Rafiqul Siddique,01814176938,Gulshan 1 Dhaka
+Mehedi Miah,Class 10,Section A,MALE,Mostafa Talukder,01824491097,Baridhara Dhaka
+Lamia Begum,Class 10,Section A,FEMALE,Nurul Hawlader,01914805256,Basabo Dhaka
+Fahim Rahman,Class 10,Section A,MALE,Mohammad Patwary,01925119415,Rampura Dhaka
+Mariya Jahan,Class 10,Section A,FEMALE,Shafiqul Majumder,01615433574,Badda Dhaka
+Alvee Ali,Class 10,Section A,MALE,Ashraful Zaman,01625747733,Lalbagh Dhaka
+Maliha Chowdhury,Class 10,Section A,FEMALE,Khorshed Haque,01516061892,Wari Dhaka
+Shahriar Chowdhury,Class 10,Section A,MALE,Nazmul Hossain,01316376051,Jatrabari Dhaka
+Samira Zaman,Class 10,Section A,FEMALE,Monirul Ahmed,01716690210,Farmgate Dhaka
+Tanim Talukder,Class 10,Section B,MALE,Zillur Rahman,01727004369,Tejgaon Dhaka
+Samia Khatun,Class 10,Section B,FEMALE,Abdul Islam,01817318528,Motijheel C/A Dhaka
+Nahian Mahmud,Class 10,Section B,MALE,Saiful Chowdhury,01827632687,Shantinagar Dhaka
+Nowshin Khan,Class 10,Section B,FEMALE,Golam Karim,01917946846,Khilgaon Dhaka
+Faisal Patwary,Class 10,Section B,MALE,Azizul Mahmud,01928261005,Malibagh Dhaka
+Fatima Tasnim,Class 10,Section B,FEMALE,Iqbal Hasan,01618575164,Moghbazar Dhaka
+Ashiq Khan,Class 10,Section B,MALE,Mizanur Khan,01628889323,Baily Road Dhaka
+Tahmina Rahman,Class 10,Section B,FEMALE,Harun Sarker,01519203482,Siddheswari Dhaka
+Ayan Zaman,Class 10,Section B,MALE,Kamal Bhuiyan,01319517641,Dhanmondi Dhaka
+Hafsa Begum,Class 10,Section B,FEMALE,Jalal Uddin,01719831800,Mirpur 10 Dhaka
