@@ -12,6 +12,7 @@ import {
   Sparkles, Filter, Building, ChevronRight, Layers,
   Sliders, RotateCcw, Save, Coffee
 } from 'lucide-react';
+import { printClassRoutine } from '@/lib/printRoutine';
 
 const DAYS_OF_WEEK = [
   { key: 'SUNDAY', en: 'Sunday', bn: 'রবিবার' },
@@ -382,6 +383,25 @@ export default function RoutinePage() {
     return routines.find(r => r.day_of_week === dayKey && r.period_number === periodNum);
   };
 
+  const handlePrintRoutine = () => {
+    const currentClass = classes.find(c => c.id === selectedClassId);
+    const currentSection = sections.find(s => s.id === selectedSectionId);
+    const currentTeacher = teachers.find(t => t.id === selectedTeacherId);
+
+    printClassRoutine({
+      institutionName: user?.institution?.name || 'Unified Education Management Platform',
+      institutionAddress: user?.institution?.address || '',
+      className: viewMode === 'TEACHER'
+        ? (currentTeacher ? `${isBn ? 'শিক্ষক' : 'Teacher'}: ${currentTeacher.name}` : (isBn ? 'শিক্ষকের রুটিন' : 'Teacher Schedule'))
+        : (currentClass ? currentClass.name : (isBn ? 'সকল শ্রেণি' : 'All Classes')),
+      sectionName: viewMode === 'TEACHER' ? '' : (currentSection ? currentSection.name : ''),
+      academicYear: '2026',
+      routines: routines,
+      periodTimings: periods,
+      isBn
+    });
+  };
+
   return (
     <div className="space-y-6 pb-20">
       {/* Header */}
@@ -415,7 +435,7 @@ export default function RoutinePage() {
 
           <button
             type="button"
-            onClick={() => window.print()}
+            onClick={handlePrintRoutine}
             className="inline-flex items-center gap-1.5 px-3.5 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 text-xs font-semibold rounded-xl shadow-xs transition-colors"
           >
             <Printer size={15} />

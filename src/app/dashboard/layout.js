@@ -47,7 +47,9 @@ export default function DashboardLayout({ children }) {
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
-        <Sidebar onClose={() => setSidebarOpen(false)} />
+        <React.Suspense fallback={<div className="w-72 bg-white h-full" />}>
+          <Sidebar onClose={() => setSidebarOpen(false)} />
+        </React.Suspense>
       </div>
 
       {/* Main Content */}

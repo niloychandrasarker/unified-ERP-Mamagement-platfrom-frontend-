@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useLanguage } from '@/lib/language';
 import api from '@/lib/api';
@@ -9,10 +10,31 @@ import {
   GraduationCap, Calendar, ClipboardCheck, CreditCard, Award,
   BookOpen, Clock, Bell, MapPin, Phone, User, CheckCircle2,
   XCircle, AlertCircle, Printer, Download, Eye, FileText,
-  DollarSign, Sparkles, X, ChevronRight, Wallet
+  DollarSign, Sparkles, X, ChevronRight, Wallet, Coffee
 } from 'lucide-react';
+import { printExamRoutine, printClassRoutine } from '@/lib/printRoutine';
 
-export default function StudentPortalDashboard() {
+const DAYS_OF_WEEK = [
+  { key: 'SUNDAY', en: 'Sunday', bn: 'রবিবার' },
+  { key: 'MONDAY', en: 'Monday', bn: 'সোমবার' },
+  { key: 'TUESDAY', en: 'Tuesday', bn: 'মঙ্গলবার' },
+  { key: 'WEDNESDAY', en: 'Wednesday', bn: 'বুধবার' },
+  { key: 'THURSDAY', en: 'Thursday', bn: 'বৃহস্পতিবার' },
+  { key: 'SATURDAY', en: 'Saturday', bn: 'শনিবার' }
+];
+
+const DEFAULT_PERIODS = [
+  { num: 1, start: '08:30', end: '09:15', labelEn: 'Period 1', labelBn: '১ম পিরিয়ড', isBreak: false },
+  { num: 2, start: '09:15', end: '10:00', labelEn: 'Period 2', labelBn: '২য় পিরিয়ড', isBreak: false },
+  { num: 3, start: '10:00', end: '10:45', labelEn: 'Period 3', labelBn: '৩য় পিরিয়ড', isBreak: false },
+  { num: 0, start: '10:45', end: '11:15', labelEn: 'Tiffin Break', labelBn: 'টিফিন বিরতি', isBreak: true },
+  { num: 4, start: '11:15', end: '12:00', labelEn: 'Period 4', labelBn: '৪র্থ পিরিয়ড', isBreak: false },
+  { num: 5, start: '12:00', end: '12:45', labelEn: 'Period 5', labelBn: '৫ম পিরিয়ড', isBreak: false },
+  { num: 6, start: '12:45', end: '01:30', labelEn: 'Period 6', labelBn: '৬ষ্ঠ পিরিয়ড', isBreak: false },
+  { num: 7, start: '01:30', end: '02:15', labelEn: 'Period 7', labelBn: '৭ম পিরিয়ড', isBreak: false }
+];
+
+function StudentPortalContent() {
   const { user } = useAuth();
   const { lang } = useLanguage();
   const isBn = lang === 'bn';
@@ -26,6 +48,9 @@ export default function StudentPortalDashboard() {
   const [resultModalOpen, setResultModalOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [paymentModalOpen, setPaymentModalOpen] = useState(false);
+  const [selectedExamId, setSelectedExamId] = useState(null);
+  const [routinePrintModalOpen, setRoutinePrintModalOpen] = useState(false);
+  const [examToPrint, setExamToPrint] = useState(null);
 
   const fetchDashboard = async () => {
     try {
@@ -40,9 +65,150 @@ export default function StudentPortalDashboard() {
     }
   };
 
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const tabFromUrl = searchParams ? searchParams.get('tab') : null;
+
+  const handleTabChange = (newTab) => {
+    setActiveTab(newTab);
+    if (newTab === 'exam_routine') {
+      setSelectedExamId(null);
+    }
+    router.push(`/dashboard/portal/student?tab=${newTab}`);
+  };
+
   useEffect(() => {
     fetchDashboard();
   }, []);
+
+  useEffect(() => {
+    if (tabFromUrl) {
+      if (tabFromUrl === 'routine' || tabFromUrl === 'exam_routine') {
+        setActiveTab('exam_routine');
+        setSelectedExamId(null);
+      } else if (['overview', 'attendance', 'results', 'fees', 'class_routine', 'notices'].includes(tabFromUrl)) {
+        setActiveTab(tabFromUrl);
+      }
+    } else {
+      setActiveTab('overview');
+    }
+  }, [tabFromUrl]);
+  const student = portalData?.student || {};
+  const attStats = portalData?.attendance?.stats || { percentage: 100, total_days: 0, present_days: 0, absent_days: 0, late_days: 0, leave_days: 0 };
+  const recentAttendance = portalData?.attendance?.recent || [];
+  const results = portalData?.results?.published_terms || portalData?.results?.term_results || [];
+  const subjectMarks = portalData?.results?.recent_marks || portalData?.results?.subject_marks || [];
+  const fees = portalData?.fees || { total_invoiced: 0, total_paid: 0, total_due: 0, invoices: [], recent_payments: [] };
+  const examRoutines = portalData?.exam_routines || portalData?.routine || [];
+  const classRoutines = portalData?.class_routines || [];
+  const routines = examRoutines; // backwards compatible
+  const notices = portalData?.notices || [];
+
+  const [periods, setPeriods] = useState(DEFAULT_PERIODS);
+
+  useEffect(() => {
+    const instId = user?.institution?.id || student?.institution_id || 'default';
+    const storageKey = `uemp_routine_periods_${instId}`;
+    try {
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setPeriods(parsed);
+            return;
+          }
+        }
+      }
+    } catch (e) {
+      console.error('Failed to parse saved periods', e);
+    }
+    setPeriods(DEFAULT_PERIODS);
+  }, [user, student]);
+
+  const getClassSlot = (dayKey, periodNum) => {
+    return (classRoutines || []).find(r => r.day_of_week === dayKey && Number(r.period_number) === Number(periodNum));
+  };
+
+  const daysOfWeek = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+  const todayDay = daysOfWeek[new Date().getDay()];
+
+  const getDayLabel = (dayKey) => {
+    const map = {
+      SUNDAY: isBn ? 'রবিবার' : 'Sunday',
+      MONDAY: isBn ? 'সোমবার' : 'Monday',
+      TUESDAY: isBn ? 'মঙ্গলবার' : 'Tuesday',
+      WEDNESDAY: isBn ? 'বুধবার' : 'Wednesday',
+      THURSDAY: isBn ? 'বৃহস্পতিবার' : 'Thursday',
+      FRIDAY: isBn ? 'শুক্রবার' : 'Friday',
+      SATURDAY: isBn ? 'শনিবার' : 'Saturday',
+    };
+    return map[dayKey] || dayKey;
+  };
+
+  const getPeriodLabel = (num) => {
+    if (isBn) {
+      const bnNums = ['০', '১ম', '২য়', '৩য়', '৪র্থ', '৫ম', '৬ষ্ঠ', '৭ম', '৮ম', '৯ম', '১০ম'];
+      return `${bnNums[num] || num} পিরিয়ড`;
+    }
+    return `Period ${num}`;
+  };
+
+  const todayClasses = classRoutines.filter(r => r.day_of_week === todayDay);
+
+  // Group published exam schedules into distinct exams (plain compute, zero hook overhead)
+  const groupedExams = (() => {
+    const map = new Map();
+    (examRoutines || []).forEach(item => {
+      const examKey = item.exam_id || item.exam_name;
+      if (!map.has(examKey)) {
+        map.set(examKey, {
+          id: item.exam_id,
+          name: item.exam_name,
+          exam_type: item.exam_type,
+          term: item.exam_term || item.term,
+          academic_year: item.exam_academic_year || item.academic_year || student.academic_year || '2026',
+          start_date: item.exam_start_date || item.start_date,
+          end_date: item.exam_end_date || item.end_date,
+          description: item.exam_description || item.description,
+          schedules: []
+        });
+      }
+      map.get(examKey).schedules.push(item);
+    });
+    return Array.from(map.values());
+  })();
+
+  const handlePrintExamRoutine = (exam) => {
+    if (!exam) return;
+    printExamRoutine({
+      institutionName: user?.institution?.name || student?.institution_name || 'Unified Education Management Platform',
+      institutionAddress: user?.institution?.address || student?.institution_address || '',
+      examName: exam.name,
+      academicYear: exam.academic_year || '2026',
+      schedules: exam.schedules || [],
+      studentInfo: {
+        name: student.name,
+        studentId: student.student_id,
+        className: student.class_name,
+        sectionName: student.section_name,
+        rollNumber: student.roll_number
+      },
+      isBn
+    });
+  };
+
+  const handlePrintClassRoutine = () => {
+    printClassRoutine({
+      institutionName: user?.institution?.name || student?.institution_name || 'Unified Education Management Platform',
+      institutionAddress: user?.institution?.address || student?.institution_address || '',
+      className: student.class_name,
+      sectionName: student.section_name,
+      academicYear: student.academic_year || '2026',
+      routines: classRoutines,
+      isBn
+    });
+  };
 
   if (loading) {
     return (
@@ -57,15 +223,6 @@ export default function StudentPortalDashboard() {
       </div>
     );
   }
-
-  const student = portalData?.student || {};
-  const attStats = portalData?.attendance?.stats || { percentage: 100, total_days: 0, present_days: 0, absent_days: 0, late_days: 0, leave_days: 0 };
-  const recentAttendance = portalData?.attendance?.recent || [];
-  const results = portalData?.results?.published_terms || portalData?.results?.term_results || [];
-  const subjectMarks = portalData?.results?.recent_marks || portalData?.results?.subject_marks || [];
-  const fees = portalData?.fees || { total_invoiced: 0, total_paid: 0, total_due: 0, invoices: [], recent_payments: [] };
-  const routines = portalData?.routine || [];
-  const notices = portalData?.notices || [];
 
   return (
     <div className="space-y-6 pb-12 font-sans">
@@ -140,18 +297,25 @@ export default function StudentPortalDashboard() {
       <div className="flex items-center gap-2 overflow-x-auto pb-2 border-b border-slate-200">
         {[
           { id: 'overview', label: isBn ? 'সারসংক্ষেপ' : 'Overview', icon: BookOpen },
+          { 
+            id: 'exam_routine', 
+            label: isBn ? 'পরীক্ষার রুটিন' : 'Exam Routine', 
+            icon: Calendar,
+            count: groupedExams.length > 0 ? groupedExams.length : null,
+            countColor: 'bg-purple-100 text-purple-700'
+          },
+          { id: 'class_routine', label: isBn ? 'ক্লাস রুটিন' : 'Class Routine', icon: Clock },
           { id: 'attendance', label: isBn ? 'উপস্থিতি খাতা' : 'Attendance', icon: ClipboardCheck },
           { id: 'results', label: isBn ? 'ফলাফল ও নম্বরপত্র' : 'Results & Marksheet', icon: Award },
           { id: 'fees', label: isBn ? 'ফি ও ইনভয়েস' : 'Fees & Invoices', icon: CreditCard },
-          { id: 'routine', label: isBn ? 'পরীক্ষার রুটিন' : 'Exam Routine', icon: Calendar },
           { id: 'notices', label: isBn ? 'নোটিশ বোর্ড' : 'Notices', icon: Bell }
         ].map(tab => {
           const Icon = tab.icon;
-          const isActive = activeTab === tab.id;
+          const isActive = activeTab === tab.id || (tab.id === 'exam_routine' && activeTab === 'routine');
           return (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => handleTabChange(tab.id)}
               className={`inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all shrink-0 ${
                 isActive
                   ? 'bg-blue-600 text-white shadow-md shadow-blue-500/20'
@@ -160,6 +324,13 @@ export default function StudentPortalDashboard() {
             >
               <Icon size={15} />
               <span>{tab.label}</span>
+              {tab.count && (
+                <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+                  isActive ? 'bg-white/20 text-white' : tab.countColor || 'bg-slate-100 text-slate-700'
+                }`}>
+                  {tab.count}
+                </span>
+              )}
             </button>
           );
         })}
@@ -219,85 +390,190 @@ export default function StudentPortalDashboard() {
             </div>
           </div>
 
-          {/* 2 Column: Notices & Upcoming Routine */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Notices Box */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                  <Bell size={16} className="text-blue-600" />
-                  <span>{isBn ? 'প্রতিষ্ঠানের নোটিশ বোর্ড' : 'Institutional Notices'}</span>
-                </h3>
-                <button
-                  onClick={() => setActiveTab('notices')}
-                  className="text-xs font-semibold text-blue-600 hover:text-blue-700"
-                >
-                  {isBn ? 'সব নোটিশ' : 'View All'} →
-                </button>
+          {/* 3 Column: Today's Classes, Upcoming Exam Routine, Notices */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* 1. Today's Classes Box */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-3.5 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Clock size={16} className="text-emerald-600" />
+                    <h3 className="font-bold text-slate-900 text-sm">
+                      {isBn ? 'আজকের ক্লাসসমূহ' : "Today's Classes"}
+                    </h3>
+                  </div>
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    {getDayLabel(todayDay)}
+                  </span>
+                </div>
+
+                <div className="space-y-2 mt-3">
+                  {todayClasses.length === 0 ? (
+                    <div className="py-8 text-center text-slate-400 space-y-1">
+                      <Clock size={24} className="mx-auto text-slate-300 mb-1" />
+                      <p className="text-xs font-semibold">
+                        {isBn ? 'আজকে কোনো নির্ধারিত ক্লাস নেই' : 'No classes scheduled today'}
+                      </p>
+                      <p className="text-[11px] text-slate-400">
+                        {isBn ? 'সাপ্তাহিক রুটিন দেখতে নিচের বাটনে চাপুন' : 'Check full timetable below'}
+                      </p>
+                    </div>
+                  ) : (
+                    todayClasses.slice(0, 4).map(cls => (
+                      <div key={cls.id} className="p-2.5 bg-slate-50/80 hover:bg-slate-100/70 rounded-xl border border-slate-100 flex items-center justify-between transition-colors">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-bold px-1.5 py-0.5 bg-emerald-100 text-emerald-800 rounded">
+                              {getPeriodLabel(cls.period_number)}
+                            </span>
+                            <span className="text-xs font-bold text-slate-900 line-clamp-1">{cls.subject_name}</span>
+                          </div>
+                          {cls.teacher_name && (
+                            <p className="text-[11px] text-slate-500 line-clamp-1">👨‍🏫 {cls.teacher_name}</p>
+                          )}
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span className="text-[10px] font-mono font-bold text-slate-700 block">
+                            {cls.start_time}
+                          </span>
+                          {cls.room_number && (
+                            <span className="text-[10px] text-slate-400">R-{cls.room_number}</span>
+                          )}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
 
-              <div className="space-y-3">
-                {notices.length === 0 ? (
-                  <p className="text-xs text-slate-400 py-6 text-center">{isBn ? 'কোনো নোটিশ নেই' : 'No notices currently'}</p>
-                ) : (
-                  notices.slice(0, 3).map(notice => (
-                    <div key={notice.id} className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 space-y-1.5">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-100 text-blue-700">
-                          {notice.category}
-                        </span>
-                        <span className="text-[11px] text-slate-400">
-                          {new Date(notice.published_at).toLocaleDateString()}
-                        </span>
-                      </div>
-                      <h4 className="font-bold text-slate-900 text-xs">{notice.title}</h4>
-                      <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">{notice.content}</p>
-                    </div>
-                  ))
-                )}
-              </div>
+              <button
+                type="button"
+                onClick={() => handleTabChange('class_routine')}
+                className="w-full py-2 text-center text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 rounded-xl transition-colors flex items-center justify-center gap-1"
+              >
+                <span>{isBn ? 'পূর্ণ ক্লাস রুটিন দেখুন' : 'View Full Class Timetable'}</span>
+                <ChevronRight size={13} />
+              </button>
             </div>
 
-            {/* Upcoming Routine Box */}
-            <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-4">
-              <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-                  <Calendar size={16} className="text-purple-600" />
-                  <span>{isBn ? 'আসন্ন পরীক্ষার সময়সূচী' : 'Upcoming Exam Routine'}</span>
-                </h3>
-                <button
-                  onClick={() => setActiveTab('routine')}
-                  className="text-xs font-semibold text-purple-600 hover:text-purple-700"
-                >
-                  {isBn ? 'পূর্ণ রুটিন' : 'Full Timetable'} →
-                </button>
+            {/* 2. Upcoming Routine Box */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-3.5 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Calendar size={16} className="text-purple-600" />
+                    <h3 className="font-bold text-slate-900 text-sm">
+                      {isBn ? 'আসন্ন পরীক্ষার রুটিন' : 'Upcoming Exams'}
+                    </h3>
+                  </div>
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                    {examRoutines.length} {isBn ? 'টি বিষয়' : 'Exams'}
+                  </span>
+                </div>
+
+                <div className="space-y-2 mt-3">
+                  {examRoutines.length === 0 ? (
+                    <div className="py-8 text-center text-slate-400 space-y-1">
+                      <Calendar size={24} className="mx-auto text-slate-300 mb-1" />
+                      <p className="text-xs font-semibold">
+                        {isBn ? 'কোনো পরীক্ষার রুটিন নেই' : 'No upcoming exams'}
+                      </p>
+                      <p className="text-[11px] text-slate-400">
+                        {isBn ? 'পরীক্ষা প্রকাশিত হলে এখানে দেখতে পাবেন' : 'Published exams will show here'}
+                      </p>
+                    </div>
+                  ) : (
+                    examRoutines.slice(0, 4).map(rt => (
+                      <div 
+                        key={rt.id} 
+                        onClick={() => {
+                          setSelectedExamId(rt.exam_id || rt.exam_name);
+                          handleTabChange('exam_routine');
+                        }}
+                        className="p-2.5 bg-slate-50/80 hover:bg-purple-50/60 rounded-xl border border-slate-100 flex items-center justify-between cursor-pointer transition-all hover:border-purple-200 group"
+                        title={isBn ? 'বিস্তারিত রুটিন দেখতে ক্লিক করুন' : 'Click to view routine'}
+                      >
+                        <div className="space-y-0.5">
+                          <span className="text-[9px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-100 inline-block">
+                            {rt.exam_name}
+                          </span>
+                          <h4 className="font-bold text-slate-900 text-xs mt-0.5 line-clamp-1 group-hover:text-purple-700 transition-colors">{rt.subject_name}</h4>
+                          <p className="text-[10px] text-slate-500 font-mono">
+                            📅 {new Date(rt.exam_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })} • ⏰ {rt.start_time}
+                          </p>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span className="text-[11px] font-bold text-slate-800 bg-white px-2 py-1 rounded border border-slate-200">
+                            {rt.room_number ? `Room ${rt.room_number}` : 'TBA'}
+                          </span>
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
 
-              <div className="space-y-3">
-                {routines.length === 0 ? (
-                  <p className="text-xs text-slate-400 py-6 text-center">{isBn ? 'কোনো পরীক্ষার রুটিন নেই' : 'No upcoming exam scheduled'}</p>
-                ) : (
-                  routines.slice(0, 3).map(rt => (
-                    <div key={rt.id} className="p-3.5 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <span className="text-[10px] font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded border border-purple-100">
-                          {rt.exam_name}
-                        </span>
-                        <h4 className="font-bold text-slate-900 text-xs mt-1">{rt.subject_name} ({rt.subject_code || '—'})</h4>
-                        <p className="text-[11px] text-slate-500 flex items-center gap-2">
-                          <span>📅 {new Date(rt.exam_date).toLocaleDateString()}</span>
-                          <span>⏰ {rt.start_time} - {rt.end_time}</span>
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-xs font-bold text-slate-800 bg-white px-2 py-1 rounded border border-slate-200">
-                          Room {rt.room_number || 'TBA'}
-                        </span>
-                      </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedExamId(null);
+                  handleTabChange('exam_routine');
+                }}
+                className="w-full py-2 text-center text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 rounded-xl transition-colors flex items-center justify-center gap-1"
+              >
+                <span>{isBn ? 'পরীক্ষার সম্পূর্ণ রুটিন' : 'View Full Exam Timetable'}</span>
+                <ChevronRight size={13} />
+              </button>
+            </div>
+
+            {/* 3. Notices Box */}
+            <div className="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-xs space-y-3.5 flex flex-col justify-between">
+              <div>
+                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+                  <div className="flex items-center gap-2">
+                    <Bell size={16} className="text-blue-600" />
+                    <h3 className="font-bold text-slate-900 text-sm">
+                      {isBn ? 'প্রাতিষ্ঠানিক নোটিশ' : 'Notice Board'}
+                    </h3>
+                  </div>
+                  <span className="text-[10px] font-extrabold px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                    {notices.length} {isBn ? 'টি নোটিশ' : 'Notices'}
+                  </span>
+                </div>
+
+                <div className="space-y-2 mt-3">
+                  {notices.length === 0 ? (
+                    <div className="py-8 text-center text-slate-400 space-y-1">
+                      <Bell size={24} className="mx-auto text-slate-300 mb-1" />
+                      <p className="text-xs font-semibold">{isBn ? 'কোনো নোটিশ নেই' : 'No notices'}</p>
                     </div>
-                  ))
-                )}
+                  ) : (
+                    notices.slice(0, 3).map(notice => (
+                      <div key={notice.id} className="p-2.5 bg-slate-50/80 rounded-xl border border-slate-100 space-y-1">
+                        <div className="flex items-center justify-between">
+                          <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded bg-blue-100 text-blue-700">
+                            {notice.category}
+                          </span>
+                          <span className="text-[10px] text-slate-400">
+                            {new Date(notice.published_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                        <h4 className="font-bold text-slate-900 text-xs line-clamp-1">{notice.title}</h4>
+                        <p className="text-[11px] text-slate-600 line-clamp-2 leading-relaxed">{notice.content}</p>
+                      </div>
+                    ))
+                  )}
+                </div>
               </div>
+
+              <button
+                type="button"
+                onClick={() => handleTabChange('notices')}
+                className="w-full py-2 text-center text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 rounded-xl transition-colors flex items-center justify-center gap-1"
+              >
+                <span>{isBn ? 'সকল নোটিশ পড়ুন' : 'View All Notices'}</span>
+                <ChevronRight size={13} />
+              </button>
             </div>
           </div>
         </div>
@@ -627,68 +903,436 @@ export default function StudentPortalDashboard() {
         </div>
       )}
 
-      {/* ROUTINE TAB */}
-      {activeTab === 'routine' && (
-        <div className="bg-white rounded-2xl border border-slate-200/80 p-6 shadow-xs space-y-4">
-          <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-            <div>
-              <h3 className="text-base font-bold text-slate-900">
-                {isBn ? 'পরীক্ষার রুটিন ও সময়সূচী' : 'Exam Routine & Timetable'}
-              </h3>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {student.class_name} • Session: {student.academic_year || '2026'}
-              </p>
+      {/* EXAM ROUTINE TAB (EXAM-WISE VIEW) */}
+      {(activeTab === 'exam_routine' || activeTab === 'routine') && (
+        <div className="space-y-6">
+          {/* LEVEL 1: ALL PUBLISHED EXAMS LIST (EXAM CARDS) */}
+          {!selectedExamId && (
+            <div className="space-y-5">
+              {/* Section Header */}
+              <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 border border-purple-100">
+                    <Calendar size={24} />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-base sm:text-lg font-black text-slate-900">
+                        {isBn ? 'পরীক্ষার রুটিন ও সময়সূচী' : 'Exam Routines & Timetables'}
+                      </h3>
+                      <span className="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        {groupedExams.length} {isBn ? 'টি প্রকাশিত পরীক্ষা' : 'Published Exams'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      {isBn
+                        ? 'আপনার শ্রেণির যেসকল পরীক্ষা প্রকাশিত হয়েছে তার তালিকা। বিস্তারিত রুটিন দেখতে যেকোনো পরীক্ষায় ক্লিক করুন।'
+                        : 'Official exam routines published for your class. Select an exam to view detailed schedule.'}
+                    </p>
+                  </div>
+                </div>
+
+                {groupedExams.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExamToPrint(groupedExams[0]);
+                      setRoutinePrintModalOpen(true);
+                    }}
+                    className="w-full sm:w-auto px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+                  >
+                    <Printer size={15} />
+                    <span>{isBn ? 'রুটিন প্রিন্ট করুন' : 'Print Timetable'}</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Published Exams Cards Grid */}
+              {groupedExams.length === 0 ? (
+                <div className="bg-white rounded-3xl border border-slate-200/80 p-12 text-center shadow-xs space-y-3">
+                  <div className="w-14 h-14 rounded-2xl bg-purple-50 text-purple-500 flex items-center justify-center mx-auto">
+                    <Calendar size={28} />
+                  </div>
+                  <h4 className="text-base font-bold text-slate-800">
+                    {isBn ? 'কোনো পরীক্ষার রুটিন প্রকাশিত হয়নি' : 'No Exam Routines Published Yet'}
+                  </h4>
+                  <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                    {isBn
+                      ? 'আপনার শ্রেণির জন্য প্রতিষ্ঠান কর্তৃক কোনো মিডটার্ম, সাময়িক বা ফাইনাল পরীক্ষার রুটিন প্রকাশিত হলে তা স্বয়ংক্রিয়ভাবে এখানে যুক্ত হবে।'
+                      : 'When school authorities publish an examination schedule for your class, it will appear here.'}
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                  {groupedExams.map((exam) => {
+                    const firstSched = exam.schedules[0];
+                    const lastSched = exam.schedules[exam.schedules.length - 1];
+                    return (
+                      <div
+                        key={exam.id || exam.name}
+                        onClick={() => setSelectedExamId(exam.id || exam.name)}
+                        className="bg-white rounded-3xl border border-slate-200/80 p-5 shadow-xs hover:shadow-md hover:border-purple-300 transition-all flex flex-col justify-between space-y-4 group cursor-pointer"
+                      >
+                        <div className="space-y-3">
+                          <div className="flex items-center justify-between">
+                            <span className="px-2.5 py-1 text-[10px] font-extrabold uppercase rounded-lg border bg-purple-50 text-purple-700 border-purple-200">
+                              {exam.exam_type?.replace('_', ' ') || 'EXAM'}
+                            </span>
+                            <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                              <CheckCircle2 size={11} /> {isBn ? 'প্রকাশিত' : 'Published'}
+                            </span>
+                          </div>
+
+                          <div>
+                            <h4 className="text-base font-black text-slate-900 group-hover:text-purple-700 transition-colors">
+                              {exam.name}
+                            </h4>
+                            <p className="text-xs font-semibold text-slate-500 mt-0.5">
+                              {exam.academic_year} • {exam.term || 'Term Final'}
+                            </p>
+                          </div>
+
+                          {exam.description && (
+                            <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
+                              {exam.description}
+                            </p>
+                          )}
+
+                          <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-100 space-y-2 text-xs">
+                            <div className="flex items-center justify-between text-slate-600">
+                              <span className="font-semibold">{isBn ? 'মোট বিষয়:' : 'Total Subjects:'}</span>
+                              <span className="font-bold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-100">
+                                {exam.schedules.length} {isBn ? 'টি বিষয় অন্তর্ভুক্ত' : 'Subjects'}
+                              </span>
+                            </div>
+                            {firstSched && (
+                              <div className="flex items-center justify-between text-slate-600">
+                                <span className="font-semibold">{isBn ? 'পরীক্ষার তারিখ:' : 'Exam Date:'}</span>
+                                <span className="font-bold text-slate-800 font-mono">
+                                  {new Date(firstSched.exam_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                                  {lastSched && lastSched !== firstSched ? ` - ${new Date(lastSched.exam_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}` : ''}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="pt-3 border-t border-slate-100 flex items-center justify-between gap-2">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedExamId(exam.id || exam.name);
+                            }}
+                            className="flex-1 py-2.5 px-3 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all flex items-center justify-center gap-1.5"
+                          >
+                            <span>{isBn ? 'বিস্তারিত রুটিন দেখুন' : 'View Detailed Routine'}</span>
+                            <ChevronRight size={14} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setExamToPrint(exam);
+                              setRoutinePrintModalOpen(true);
+                            }}
+                            className="p-2.5 text-slate-600 hover:text-purple-700 hover:bg-purple-50 rounded-xl border border-slate-200 transition-colors"
+                            title={isBn ? 'প্রিন্ট রুটিন' : 'Print Timetable'}
+                          >
+                            <Printer size={16} />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* LEVEL 2: INSIDE SPECIFIC EXAM (DETAILED TIMETABLE) */}
+          {selectedExamId && (() => {
+            const currentExam = groupedExams.find(e => e.id === selectedExamId || e.name === selectedExamId) || groupedExams[0];
+            if (!currentExam) {
+              return (
+                <div className="p-8 text-center bg-white rounded-3xl border border-slate-200">
+                  <p className="text-xs text-slate-500">{isBn ? 'পরীক্ষা পাওয়া যায়নি' : 'Exam not found'}</p>
+                  <button
+                    onClick={() => setSelectedExamId(null)}
+                    className="mt-3 px-4 py-2 bg-blue-600 text-white text-xs font-bold rounded-xl"
+                  >
+                    ← {isBn ? 'সকল পরীক্ষায় ফিরে যান' : 'Back to Exams'}
+                  </button>
+                </div>
+              );
+            }
+
+            return (
+              <div className="space-y-5">
+                {/* Navigation & Header Banner */}
+                <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedExamId(null)}
+                      className="inline-flex items-center gap-1.5 text-xs font-bold text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 px-3 py-1.5 rounded-xl transition-colors mb-2.5"
+                    >
+                      <span>← {isBn ? 'সকল পরীক্ষার তালিকা' : 'Back to All Exams'}</span>
+                    </button>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="text-lg sm:text-2xl font-black text-slate-900">
+                        {currentExam.name}
+                      </h3>
+                      <span className="px-2.5 py-0.5 text-[10px] font-bold rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                        {isBn ? '✓ অনুমোদিত ও প্রকাশিত' : '✓ Published'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-1">
+                      {student.class_name} {student.section_name ? `(${student.section_name})` : ''} • {isBn ? 'শিক্ষাবর্ষ' : 'Session'}: {currentExam.academic_year} • {currentExam.term} • {currentExam.schedules.length} {isBn ? 'টি বিষয়' : 'Subjects'}
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 w-full sm:w-auto">
+                    {/* Switcher if multiple exams */}
+                    {groupedExams.length > 1 && (
+                      <select
+                        value={selectedExamId}
+                        onChange={(e) => setSelectedExamId(e.target.value)}
+                        className="px-3 py-2 bg-slate-50 border border-slate-200 text-xs font-bold text-slate-700 rounded-xl focus:outline-hidden"
+                      >
+                        {groupedExams.map(e => (
+                          <option key={e.id || e.name} value={e.id || e.name}>
+                            {e.name} ({e.term})
+                          </option>
+                        ))}
+                      </select>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setExamToPrint(currentExam);
+                        setRoutinePrintModalOpen(true);
+                      }}
+                      className="px-4 py-2.5 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold rounded-xl transition-all shadow-xs flex items-center justify-center gap-2"
+                    >
+                      <Printer size={15} />
+                      <span>{isBn ? 'রুটিন প্রিন্ট / ডাউনলোড' : 'Print Timetable'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Detailed Timetable Table */}
+                <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs border-collapse">
+                      <thead>
+                        <tr className="bg-slate-50/90 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+                          <th className="py-3 px-4">#</th>
+                          <th className="py-3 px-4">{isBn ? 'তারিখ ও দিন' : 'Date & Day'}</th>
+                          <th className="py-3 px-4">{isBn ? 'বিষয় ও কোড' : 'Subject & Code'}</th>
+                          <th className="py-3 px-4">{isBn ? 'সময় ও ব্যপ্তিকাল' : 'Time & Duration'}</th>
+                          <th className="py-3 px-4">{isBn ? 'পরীক্ষার কক্ষ' : 'Room'}</th>
+                          <th className="py-3 px-4">{isBn ? 'পূর্ণমান / পাস নম্বর' : 'Marks (Full/Pass)'}</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100">
+                        {currentExam.schedules.map((rt, idx) => (
+                          <tr key={rt.id} className="hover:bg-purple-50/30 transition-colors">
+                            <td className="py-3.5 px-4 font-mono font-bold text-slate-400">{idx + 1}</td>
+                            <td className="py-3.5 px-4">
+                              <p className="font-bold text-slate-900">
+                                {new Date(rt.exam_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                              </p>
+                              <p className="text-[10px] font-semibold text-purple-600 mt-0.5">
+                                {new Date(rt.exam_date).toLocaleDateString('en-GB', { weekday: 'long' })}
+                              </p>
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <p className="font-bold text-slate-900">{rt.subject_name}</p>
+                              {rt.subject_code && (
+                                <span className="font-mono text-slate-400 text-[10px]">Code: {rt.subject_code}</span>
+                              )}
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <p className="font-semibold text-slate-800 flex items-center gap-1">
+                                <Clock size={12} className="text-blue-500" />
+                                <span>{rt.start_time} - {rt.end_time}</span>
+                              </p>
+                              <span className="text-[10px] text-slate-400 font-mono">
+                                {rt.duration_minutes ? `(${rt.duration_minutes} mins)` : ''}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-4">
+                              <span className="px-2.5 py-1 bg-slate-100 text-slate-800 font-bold rounded-lg font-mono text-[11px]">
+                                {rt.room_number ? `Room ${rt.room_number}` : 'TBA'}
+                              </span>
+                            </td>
+                            <td className="py-3.5 px-4 font-mono">
+                              <span className="font-bold text-blue-600 text-sm">{rt.full_marks}</span>
+                              <span className="text-slate-400 text-[10px]"> / Pass: {rt.pass_marks || 33}</span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
+        </div>
+      )}
+
+      {/* CLASS ROUTINE TAB */}
+      {activeTab === 'class_routine' && (
+        <div className="space-y-5">
+          {/* Header Card */}
+          <div className="bg-white rounded-3xl border border-slate-200/80 p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-3.5">
+              <div className="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 border border-emerald-100">
+                <Clock size={24} />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-base sm:text-lg font-black text-slate-900">
+                    {isBn ? 'সাপ্তাহিক ক্লাস রুটিন' : 'Weekly Class Timetable'}
+                  </h3>
+                  <span className="px-2 py-0.5 text-[10px] font-bold rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                    {student.class_name} {student.section_name ? `(${student.section_name})` : ''}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  {isBn ? 'প্রতিদিনের ক্লাসের সময়সূচী ও পিরিয়ড তালিকা।' : 'Daily academic period and classroom schedule.'}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <button
+                type="button"
+                onClick={handlePrintClassRoutine}
+                className="w-full sm:w-auto px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+              >
+                <Printer size={15} />
+                <span>{isBn ? 'ক্লাস রুটিন প্রিন্ট' : 'Print Timetable'}</span>
+              </button>
             </div>
           </div>
 
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs">
-              <thead className="bg-slate-50 text-slate-400 uppercase font-semibold text-[10px] tracking-wider border-b border-slate-100">
-                <tr>
-                  <th className="px-4 py-3">{isBn ? 'তারিখ ও দিন' : 'Date'}</th>
-                  <th className="px-4 py-3">{isBn ? 'পরীক্ষা' : 'Exam'}</th>
-                  <th className="px-4 py-3">{isBn ? 'বিষয় ও কোড' : 'Subject'}</th>
-                  <th className="px-4 py-3">{isBn ? 'সময়' : 'Time'}</th>
-                  <th className="px-4 py-3">{isBn ? 'কক্ষ নম্বর' : 'Room'}</th>
-                  <th className="px-4 py-3">{isBn ? 'পূর্ণ নম্বর' : 'Full Marks'}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {routines.length === 0 ? (
-                  <tr>
-                    <td colSpan="6" className="px-4 py-8 text-center text-slate-400">
-                      {isBn ? 'বর্তমান ক্লাসের কোনো পরীক্ষার রুটিন নেই' : 'No exam schedules found for this class'}
-                    </td>
-                  </tr>
-                ) : (
-                  routines.map((rt) => (
-                    <tr key={rt.id} className="hover:bg-slate-50/70">
-                      <td className="px-4 py-3 font-mono font-bold text-slate-900">
-                        {new Date(rt.exam_date).toLocaleDateString('en-GB', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' })}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span className="font-semibold text-purple-700 bg-purple-50 px-2 py-0.5 rounded border border-purple-100">
-                          {rt.exam_name}
+          {/* Timetable View */}
+          {classRoutines.length === 0 ? (
+            <div className="bg-white rounded-3xl border border-slate-200/80 p-12 text-center shadow-xs space-y-3">
+              <div className="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+                <Clock size={28} />
+              </div>
+              <h4 className="text-base font-bold text-slate-800">
+                {isBn ? 'কোনো ক্লাস রুটিন যুক্ত করা হয়নি' : 'No Class Timetable Found'}
+              </h4>
+              <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                {isBn
+                  ? 'আপনার ক্লাসের সাপ্তাহিক রুটিন এখনো আপলোড করা হয়নি। ক্লাস রুটিন প্রণীত হলে এখানে দেখতে পাবেন।'
+                  : 'The weekly period routine for your class has not been set yet.'}
+              </p>
+            </div>
+          ) : (
+            <div className="bg-white rounded-3xl border border-slate-200/80 shadow-xs overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[900px]">
+                <thead>
+                  <tr className="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
+                    <th className="py-3.5 px-4 w-32 border-r border-slate-200/70">{isBn ? 'দিন (Day)' : 'Day'}</th>
+                    {periods.map((p, idx) => (
+                      <th
+                        key={idx}
+                        className={`py-3 px-3 text-center border-r border-slate-200/70 last:border-r-0 ${
+                          p.isBreak ? 'bg-amber-50/60 w-24' : 'min-w-[135px]'
+                        }`}
+                      >
+                        <span className="block text-slate-800 font-bold">{isBn ? (p.labelBn || p.labelEn) : p.labelEn}</span>
+                        <span className="block font-mono text-[10px] text-slate-500 font-medium mt-0.5">
+                          {p.start} - {p.end}
                         </span>
-                      </td>
-                      <td className="px-4 py-3 font-bold text-slate-800">
-                        {rt.subject_name} {rt.subject_code && <span className="font-mono text-slate-400 text-[10px]">({rt.subject_code})</span>}
-                      </td>
-                      <td className="px-4 py-3 font-mono text-slate-600">
-                        {rt.start_time} - {rt.end_time}
-                      </td>
-                      <td className="px-4 py-3 font-bold text-slate-800">
-                        {rt.room_number || 'TBA'}
-                      </td>
-                      <td className="px-4 py-3 font-mono font-bold text-blue-600">
-                        {rt.full_marks}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 text-xs">
+                  {DAYS_OF_WEEK.map((day) => {
+                    const isToday = todayDay === day.key;
+                    return (
+                      <tr key={day.key} className={`transition-colors ${isToday ? 'bg-emerald-50/15' : 'hover:bg-slate-50/30'}`}>
+                        {/* Day Header Column */}
+                        <td className={`py-4 px-4 font-bold border-r border-slate-200/70 ${isToday ? 'bg-emerald-50/40 text-emerald-950' : 'bg-slate-50/40 text-slate-900'}`}>
+                          <div className="flex items-center gap-1.5">
+                            <span className={`w-2 h-2 rounded-full ${isToday ? 'bg-emerald-500 ring-2 ring-emerald-300' : 'bg-blue-600'}`}></span>
+                            <span>{isBn ? day.bn : day.en}</span>
+                          </div>
+                          {isToday && (
+                            <span className="inline-block mt-1 text-[9px] font-black uppercase tracking-wider px-1.5 py-0.5 bg-emerald-600 text-white rounded-md shadow-2xs">
+                              {isBn ? 'আজকের দিন' : 'Today'}
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Periods Columns */}
+                        {periods.map((p, pIdx) => {
+                          if (p.isBreak) {
+                            return (
+                              <td
+                                key={pIdx}
+                                className="py-3 px-2 bg-amber-50/40 text-center border-r border-slate-200/70 text-amber-800 font-semibold text-[11px]"
+                              >
+                                <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-amber-100/80 text-amber-800 text-[10px] font-bold">
+                                  <Coffee size={11} />
+                                  {isBn ? (p.labelBn || 'বিরতি') : (p.labelEn || 'Break')}
+                                </span>
+                              </td>
+                            );
+                          }
+
+                          const slot = getClassSlot(day.key, p.num);
+
+                          return (
+                            <td key={pIdx} className="py-2.5 px-2.5 border-r border-slate-200/70 last:border-r-0 align-top">
+                              {slot ? (
+                                <div className="p-2.5 rounded-2xl bg-gradient-to-br from-blue-50/80 to-indigo-50/40 border border-blue-200/70 space-y-1.5 hover:shadow-md transition-all">
+                                  <div className="flex items-start justify-between gap-1">
+                                    <span className="font-bold text-slate-900 text-xs leading-tight">
+                                      {slot.subject_name}
+                                    </span>
+                                    {slot.room_number && (
+                                      <span className="px-1.5 py-0.5 bg-white text-blue-700 text-[10px] font-bold rounded-md border border-blue-100 shadow-2xs shrink-0">
+                                        R-{slot.room_number}
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {slot.subject_code && (
+                                    <span className="text-[10px] font-mono text-slate-400 block">
+                                      Code: {slot.subject_code}
+                                    </span>
+                                  )}
+
+                                  <div className="text-[11px] text-slate-600 flex items-center gap-1 pt-1 border-t border-blue-100/60">
+                                    <User size={11} className="text-slate-400 shrink-0" />
+                                    <span className="truncate font-medium">{slot.teacher_name || 'N/A'}</span>
+                                  </div>
+                                </div>
+                              ) : (
+                                <div className="h-16 flex items-center justify-center text-slate-300 text-xs">
+                                  —
+                                </div>
+                              )}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
@@ -864,7 +1508,169 @@ export default function StudentPortalDashboard() {
           </div>
         </div>
       )}
+
+      {/* DEDICATED OFFICIAL EXAM ROUTINE PRINT MODAL */}
+      {routinePrintModalOpen && examToPrint && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-150">
+          <div className="bg-white rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl border border-slate-100 space-y-6 max-h-[90vh] overflow-y-auto">
+            {/* Modal Actions Header (Hidden on Print) */}
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3 no-print">
+              <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
+                <Printer size={18} className="text-purple-600" />
+                <span>{isBn ? 'অফিসিয়াল পরীক্ষার রুটিন প্রিন্ট কপি' : 'Official Timetable Print Preview'}</span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setRoutinePrintModalOpen(false)}
+                className="p-1 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Printable Document Area */}
+            <div id="printable-exam-routine" className="p-6 sm:p-8 border-2 border-slate-900 rounded-2xl bg-white space-y-5 text-slate-900">
+              {/* Institution Header (Large & Bold as requested) */}
+              <div className="text-center pb-4 border-b-2 border-slate-950 space-y-1">
+                <h1 className="text-3xl sm:text-4xl font-black uppercase text-slate-950 tracking-wider">
+                  {user?.institution?.name || student?.institution_name || 'Unified Education Management Platform'}
+                </h1>
+                {(user?.institution?.address || student?.institution_address) && (
+                  <p className="text-xs text-slate-700 font-semibold tracking-wide">
+                    {user?.institution?.address || student?.institution_address}
+                  </p>
+                )}
+                <div className="pt-2">
+                  <span className="inline-block px-5 py-1 bg-slate-950 text-white font-black text-sm uppercase tracking-widest rounded-md">
+                    {examToPrint.name} — {examToPrint.academic_year || '2026'}
+                  </span>
+                  <p className="text-xs font-black text-slate-900 uppercase tracking-widest mt-1.5">
+                    {isBn ? 'অফিসিয়াল পরীক্ষার রুটিন ও সময়সূচী' : 'OFFICIAL EXAMINATION TIMETABLE'}
+                  </p>
+                </div>
+              </div>
+
+              {/* Student Metadata Box */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs bg-slate-50 p-3.5 rounded-xl border border-slate-900">
+                <div>
+                  <span className="text-slate-600 font-bold block text-[10px] uppercase">{isBn ? 'শিক্ষার্থীর নাম:' : 'Student Name:'}</span>
+                  <strong className="text-slate-950 font-black text-sm">{student.name}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-600 font-bold block text-[10px] uppercase">{isBn ? 'আইডি নম্বর:' : 'Student ID:'}</span>
+                  <strong className="font-mono text-slate-950 font-black text-sm">{student.student_id}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-600 font-bold block text-[10px] uppercase">{isBn ? 'শ্রেণি ও শাখা:' : 'Class & Section:'}</span>
+                  <strong className="text-slate-950 font-black text-sm">{student.class_name} {student.section_name ? `(${student.section_name})` : ''}</strong>
+                </div>
+                <div>
+                  <span className="text-slate-600 font-bold block text-[10px] uppercase">{isBn ? 'রোল নম্বর:' : 'Roll Number:'}</span>
+                  <strong className="font-mono text-slate-950 font-black text-sm">{student.roll_number || '—'}</strong>
+                </div>
+              </div>
+
+              {/* Official Timetable Table */}
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs border-collapse border-2 border-slate-950">
+                  <thead>
+                    <tr className="bg-slate-200 text-slate-950 font-black uppercase text-[11px] border-b-2 border-slate-950">
+                      <th className="p-2.5 border-r-2 border-slate-950 text-center w-10">#</th>
+                      <th className="p-2.5 border-r-2 border-slate-950">{isBn ? 'তারিখ ও দিন' : 'Date & Day'}</th>
+                      <th className="p-2.5 border-r-2 border-slate-950">{isBn ? 'বিষয় ও কোড' : 'Subject & Code'}</th>
+                      <th className="p-2.5 border-r-2 border-slate-950">{isBn ? 'পরীক্ষার সময়' : 'Exam Time'}</th>
+                      <th className="p-2.5 border-r-2 border-slate-950 text-center">{isBn ? 'কক্ষ নম্বর' : 'Room No'}</th>
+                      <th className="p-2.5 text-center">{isBn ? 'পূর্ণমান' : 'Marks'}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y-2 divide-slate-950">
+                    {examToPrint.schedules.map((rt, idx) => (
+                      <tr key={rt.id} className="border-b-2 border-slate-950 hover:bg-slate-50">
+                        <td className="p-2.5 border-r-2 border-slate-950 text-center font-bold font-mono">{idx + 1}</td>
+                        <td className="p-2.5 border-r-2 border-slate-950">
+                          <span className="font-black text-slate-950 block">
+                            {new Date(rt.exam_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                          </span>
+                          <span className="text-[10px] text-slate-700 font-semibold">
+                            {new Date(rt.exam_date).toLocaleDateString('en-GB', { weekday: 'long' })}
+                          </span>
+                        </td>
+                        <td className="p-2.5 border-r-2 border-slate-950">
+                          <span className="font-black text-slate-950 text-sm">{rt.subject_name}</span>
+                          {rt.subject_code && (
+                            <span className="text-slate-600 font-mono text-[10px] block">Code: {rt.subject_code}</span>
+                          )}
+                        </td>
+                        <td className="p-2.5 border-r-2 border-slate-950 font-mono font-bold text-slate-950">
+                          <div>{rt.start_time} - {rt.end_time}</div>
+                          {rt.duration_minutes && (
+                            <div className="text-[10px] text-slate-600">({rt.duration_minutes} mins)</div>
+                          )}
+                        </td>
+                        <td className="p-2.5 border-r-2 border-slate-950 text-center font-bold">
+                          {rt.room_number ? `Room ${rt.room_number}` : 'TBA'}
+                        </td>
+                        <td className="p-2.5 text-center font-mono font-black text-slate-950 text-sm">
+                          {rt.full_marks}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Official Authority Signatures */}
+              <div className="pt-12 pb-2 flex justify-between text-xs text-slate-950">
+                <div className="text-center">
+                  <div className="w-36 border-b-2 border-slate-950 mb-1 mx-auto"></div>
+                  <span className="font-bold">{isBn ? 'শ্রেণি শিক্ষক' : 'Class Teacher'}</span>
+                </div>
+                <div className="text-center">
+                  <div className="w-40 border-b-2 border-slate-950 mb-1 mx-auto"></div>
+                  <span className="font-bold">{isBn ? 'অধ্যক্ষ / পরীক্ষা নিয়ন্ত্রক' : 'Principal / Exam Controller'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Actions (Hidden on Print) */}
+            <div className="flex items-center justify-end gap-3 pt-2 no-print">
+              <button
+                type="button"
+                onClick={() => setRoutinePrintModalOpen(false)}
+                className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
+              >
+                {isBn ? 'বন্ধ করুন' : 'Close'}
+              </button>
+              <button
+                type="button"
+                onClick={() => handlePrintExamRoutine(examToPrint)}
+                className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-xl bg-purple-600 hover:bg-purple-700 text-xs font-bold text-white shadow-md transition-colors"
+              >
+                <Printer size={15} />
+                <span>{isBn ? 'রুটিন সরাসরি প্রিন্ট করুন' : 'Print Timetable'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+  );
+}
+
+export default function StudentPortalDashboard() {
+  return (
+    <Suspense fallback={
+      <div className="space-y-6 animate-pulse p-6">
+        <div className="h-44 bg-slate-200 rounded-3xl"></div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="h-36 bg-white rounded-2xl border border-slate-100"></div>
+          <div className="h-36 bg-white rounded-2xl border border-slate-100"></div>
+          <div className="h-36 bg-white rounded-2xl border border-slate-100"></div>
+        </div>
+      </div>
+    }>
+      <StudentPortalContent />
+    </Suspense>
   );
 }
 

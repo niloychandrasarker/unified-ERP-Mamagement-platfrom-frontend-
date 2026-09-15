@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import { useLanguage } from '@/lib/language';
 import {
@@ -26,7 +26,9 @@ import {
   GraduationCap,
   Sliders,
   CheckCircle2,
-  User
+  User,
+  Clock,
+  Bell
 } from 'lucide-react';
 
 function CampusLogo({ logo, name, size = 'sm' }) {
@@ -69,6 +71,8 @@ function CampusLogo({ logo, name, size = 'sm' }) {
 
 export default function Sidebar({ onClose }) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const studentActiveTab = searchParams ? (searchParams.get('tab') || 'overview') : 'overview';
   const { user, logout } = useAuth();
   const { lang, setLang } = useLanguage();
 
@@ -314,11 +318,54 @@ export default function Sidebar({ onClose }) {
           </div>
 
           <div className="flex-1 py-4 px-3 space-y-1">
-            <NavItem href="/dashboard/portal/student" icon={LayoutDashboard} label="Student Portal (আমার পোর্টাল)" active={pathname === '/dashboard/portal/student' || pathname === '/dashboard'} />
-            <NavItem href="/dashboard/exams/results" icon={Award} label="My Exam Results & Marksheet" active={pathname.includes('/results')} />
-            <NavItem href="/dashboard/academics/routine" icon={Calendar} label="Class Timetable" active={pathname.includes('/academics/routine')} />
-            <NavItem href="/dashboard/fees/invoices" icon={CreditCard} label="My Fees & Invoices" active={pathname.includes('/fees')} />
-            <NavItem href="/dashboard/profile" icon={GraduationCap} label="My Academic Profile" active={pathname === '/dashboard/profile'} />
+            <NavItem 
+              href="/dashboard/portal/student?tab=overview" 
+              icon={LayoutDashboard} 
+              label={lang === 'bn' ? "আমার ড্যাশবোর্ড" : "Student Dashboard"} 
+              active={(pathname.includes('/portal/student') || pathname === '/dashboard') && (studentActiveTab === 'overview' || !searchParams?.get('tab'))} 
+            />
+            <NavItem 
+              href="/dashboard/portal/student?tab=exam_routine" 
+              icon={Calendar} 
+              label={lang === 'bn' ? "পরীক্ষার রুটিন (Exam Routine)" : "Exam Routine"} 
+              active={(pathname.includes('/portal/student') || pathname === '/dashboard') && (studentActiveTab === 'exam_routine' || studentActiveTab === 'routine')} 
+            />
+            <NavItem 
+              href="/dashboard/portal/student?tab=class_routine" 
+              icon={Clock} 
+              label={lang === 'bn' ? "ক্লাস রুটিন (Class Timetable)" : "Class Timetable"} 
+              active={(pathname.includes('/portal/student') || pathname === '/dashboard') && studentActiveTab === 'class_routine'} 
+            />
+            <NavItem 
+              href="/dashboard/portal/student?tab=attendance" 
+              icon={ClipboardCheck} 
+              label={lang === 'bn' ? "উপস্থিতি খাতা" : "Daily Attendance"} 
+              active={(pathname.includes('/portal/student') || pathname === '/dashboard') && studentActiveTab === 'attendance'} 
+            />
+            <NavItem 
+              href="/dashboard/portal/student?tab=results" 
+              icon={Award} 
+              label={lang === 'bn' ? "পরীক্ষার ফলাফল" : "My Results & Marksheet"} 
+              active={(pathname.includes('/portal/student') || pathname === '/dashboard') && studentActiveTab === 'results'} 
+            />
+            <NavItem 
+              href="/dashboard/portal/student?tab=fees" 
+              icon={CreditCard} 
+              label={lang === 'bn' ? "ফি ও ইনভয়েস" : "Fees & Invoices"} 
+              active={(pathname.includes('/portal/student') || pathname === '/dashboard') && studentActiveTab === 'fees'} 
+            />
+            <NavItem 
+              href="/dashboard/portal/student?tab=notices" 
+              icon={Bell} 
+              label={lang === 'bn' ? "নোটিশ বোর্ড" : "Notice Board"} 
+              active={(pathname.includes('/portal/student') || pathname === '/dashboard') && studentActiveTab === 'notices'} 
+            />
+            <NavItem 
+              href="/dashboard/profile" 
+              icon={GraduationCap} 
+              label={lang === 'bn' ? "একাডেমিক প্রোফাইল" : "Academic Profile"} 
+              active={pathname === '/dashboard/profile'} 
+            />
           </div>
 
           <div className="p-4 border-t border-gray-200">

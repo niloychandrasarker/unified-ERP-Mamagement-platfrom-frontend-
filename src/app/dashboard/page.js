@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth';
 import api from '@/lib/api';
 import {
@@ -20,10 +21,15 @@ import TeacherPortalDashboard from './portal/teacher/page';
 
 export default function DashboardHome() {
   const { user } = useAuth();
+  const router = useRouter();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (user?.role === 'STUDENT') {
+      router.replace('/dashboard/portal/student');
+      return;
+    }
     if (user?.role === 'SUPER_ADMIN') {
       const fetchStats = async () => {
         try {

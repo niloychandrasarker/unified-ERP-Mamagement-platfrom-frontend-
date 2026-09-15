@@ -27,6 +27,7 @@ import {
   X
 } from 'lucide-react';
 import Link from 'next/link';
+import { printExamRoutine } from '@/lib/printRoutine';
 
 export default function ExamsManagementPage() {
   const { user } = useAuth();
@@ -44,6 +45,7 @@ export default function ExamsManagementPage() {
   const [loadingSchedules, setLoadingSchedules] = useState(false);
   const [savingExam, setSavingExam] = useState(false);
   const [savingSchedule, setSavingSchedule] = useState(false);
+  const [publishingExam, setPublishingExam] = useState(false);
 
   // Data
   const [exams, setExams] = useState([]);
@@ -66,7 +68,9 @@ export default function ExamsManagementPage() {
     term: 'Term 1',
     start_date: '',
     end_date: '',
-    description: ''
+    description: '',
+    class_id: '',
+    is_published: false
   });
 
   const [showScheduleModal, setShowScheduleModal] = useState(false);
@@ -142,6 +146,30 @@ export default function ExamsManagementPage() {
     }
   };
 
+  const handlePrintRoutine = () => {
+    const currentExam = exams.find(e => e.id === selectedExamId);
+    if (!currentExam) {
+      toast.error(isBn ? 'অনুগ্রহ করে একটি পরীক্ষা নির্বাচন করুন' : 'Please select an exam first');
+      return;
+    }
+    const currentClass = classes.find(c => c.id === selectedClassId);
+    const schedulesToPrint = selectedClassId
+      ? schedules.filter(s => s.class_id === selectedClassId)
+      : schedules;
+
+    printExamRoutine({
+      institutionName: user?.institution?.name || 'Unified Education Management Platform',
+      institutionAddress: user?.institution?.address || '',
+      examName: currentExam.name,
+      academicYear: currentExam.academic_year || '2026',
+      schedules: schedulesToPrint,
+      classInfo: {
+        className: currentClass ? currentClass.name : (isBn ? 'সকল শ্রেণি' : 'All Classes')
+      },
+      isBn
+    });
+  };
+
   // ==========================================
   // EXAM CRUD HANDLERS
   // ==========================================
@@ -155,7 +183,9 @@ export default function ExamsManagementPage() {
         term: exam.term || 'Term 1',
         start_date: exam.start_date ? exam.start_date.slice(0, 10) : '',
         end_date: exam.end_date ? exam.end_date.slice(0, 10) : '',
-        description: exam.description || ''
+        description: exam.description || '',
+        class_id: exam.class_id || '',
+        is_published: !!exam.is_published
       });
     } else {
       setEditingExam(null);
@@ -166,7 +196,9 @@ export default function ExamsManagementPage() {
         term: 'Term 1',
         start_date: '',
         end_date: '',
-        description: ''
+        description: '',
+        class_id: selectedClassId || '',
+        is_published: false
       });
     }
     setShowExamModal(true);
@@ -208,6 +240,26 @@ export default function ExamsManagementPage() {
     }
   };
 
+  const handlePublishExam = async (examId, publishStatus) => {
+    try {
+      setPublishingExam(true);
+      await api.patch(`/exams/${examId}/publish`, { is_published: publishStatus });
+      toast.success(
+        publishStatus
+          ? (isBn ? 'পরীক্ষা ও রুটিন সফলভাবে প্রকাশিত হয়েছে! সংশ্লিষ্ট ক্লাসের শিক্ষার্থীদের পোর্টালে পৌঁছে গেছে।' : 'Exam & routine published! Students can now view their timetable on the portal.')
+          : (isBn ? 'পরীক্ষা ড্রাফট করা হয়েছে' : 'Exam marked as draft')
+      );
+      loadInitialData();
+      if (activeTab === 'schedules') {
+        loadSchedules();
+      }
+    } catch (err) {
+      toast.error(err.response?.data?.message || err.message || 'Failed to update publish status');
+    } finally {
+      setPublishingExam(false);
+    }
+  };
+
   // ==========================================
   // SCHEDULE (ROUTINE) CRUD HANDLERS
   // ==========================================
@@ -233,7 +285,8 @@ export default function ExamsManagementPage() {
       }
     } else {
       const targetExamId = presetExamId || selectedExamId || (exams[0]?.id || '');
-      const initialClassId = selectedClassId || (classes[0]?.id || '');
+      const currentExam = exams.find(e => e.id === targetExamId);
+      const initialClassId = currentExam?.class_id || selectedClassId || (classes[0]?.id || '');
       setEditingSchedule(null);
       setScheduleForm({
         exam_id: targetExamId,
@@ -400,22 +453,37 @@ export default function ExamsManagementPage() {
       {activeTab === 'exams' && (
         <div className="space-y-6">
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
-              <input
-                type="text"
-                placeholder={isBn ? 'পরীক্ষার নাম দিয়ে খুঁজুন...' : 'Search exams...'}
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-xs focus:outline-hidden focus:border-blue-600 bg-white"
-              />
+            <div className="flex items-center gap-3 flex-1 flex-wrap">
+              <div className="relative flex-1 min-w-[220px]">
+                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" size={16} />
+                <input
+                  type="text"
+                  placeholder={isBn ? 'পরীক্ষার নাম দিয়ে খুঁজুন...' : 'Search exams...'}
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-xl text-xs focus:outline-hidden focus:border-blue-600 bg-white"
+                />
+              </div>
+
+              <div className="w-full sm:w-52">
+                <select
+                  value={selectedClassId}
+                  onChange={(e) => setSelectedClassId(e.target.value)}
+                  className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold focus:outline-hidden focus:border-blue-600 bg-white"
+                >
+                  <option value="">{isBn ? '-- সকল শ্রেণির পরীক্ষা --' : '-- All Classes --'}</option>
+                  {classes.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {isAdmin && (
               <button
                 type="button"
                 onClick={() => handleOpenExamModal()}
-                className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5"
+                className="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 shrink-0"
               >
                 <Plus size={16} />
                 <span>{isBn ? '+ নতুন পরীক্ষা তৈরি করুন' : '+ Create New Exam'}</span>
@@ -455,7 +523,11 @@ export default function ExamsManagementPage() {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
               {exams
-                .filter(e => !searchTerm || e.name.toLowerCase().includes(searchTerm.toLowerCase()) || e.term.toLowerCase().includes(searchTerm.toLowerCase()))
+                .filter(e => {
+                  const matchesSearch = !searchTerm || e.name.toLowerCase().includes(searchTerm.toLowerCase()) || e.term.toLowerCase().includes(searchTerm.toLowerCase());
+                  const matchesClass = !selectedClassId || e.class_id === selectedClassId || (!e.class_id);
+                  return matchesSearch && matchesClass;
+                })
                 .map((exam) => (
                   <div
                     key={exam.id}
@@ -466,15 +538,37 @@ export default function ExamsManagementPage() {
                         <span className={`px-2.5 py-1 text-[10px] font-bold uppercase rounded-lg border ${getExamTypeBadge(exam.exam_type)}`}>
                           {exam.exam_type?.replace('_', ' ')}
                         </span>
-                        <span className="text-xs font-mono font-bold text-slate-500 bg-slate-50 px-2 py-0.5 rounded-md">
-                          {exam.academic_year} • {exam.term}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          {exam.is_published ? (
+                            <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 flex items-center gap-1">
+                              <CheckCircle2 size={11} /> {isBn ? 'প্রকাশিত' : 'Published'}
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-amber-50 text-amber-700 border border-amber-200 flex items-center gap-1">
+                              <AlertCircle size={11} /> {isBn ? 'ড্রাফট' : 'Draft'}
+                            </span>
+                          )}
+                          <span className="text-xs font-mono font-bold text-slate-500 bg-slate-50 px-2 py-0.5 rounded-md">
+                            {exam.academic_year} • {exam.term}
+                          </span>
+                        </div>
                       </div>
 
                       <div>
                         <h3 className="text-base font-extrabold text-slate-900 leading-snug">{exam.name}</h3>
+                        <div className="flex items-center gap-2 flex-wrap mt-1.5">
+                          {exam.class_name ? (
+                            <span className="px-2 py-0.5 text-[10px] font-extrabold rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200 flex items-center gap-1">
+                              🎯 {isBn ? 'শ্রেণি:' : 'Class:'} {exam.class_name}
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 text-[10px] font-bold rounded-md bg-slate-100 text-slate-600 border border-slate-200 flex items-center gap-1">
+                              🌐 {isBn ? 'সকল শ্রেণি (All Classes)' : 'All Classes'}
+                            </span>
+                          )}
+                        </div>
                         {exam.description && (
-                          <p className="text-xs text-slate-500 line-clamp-2 mt-1">{exam.description}</p>
+                          <p className="text-xs text-slate-500 line-clamp-2 mt-1.5">{exam.description}</p>
                         )}
                       </div>
 
@@ -494,50 +588,81 @@ export default function ExamsManagementPage() {
                       </div>
                     </div>
 
-                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setSelectedExamId(exam.id);
-                            setActiveTab('schedules');
-                          }}
-                          className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1"
-                        >
-                          <span>{isBn ? 'রুটিন দেখুন' : 'View Routine'}</span>
-                          <ChevronRight size={14} />
-                        </button>
-
-                        {isAdmin && (
+                    <div className="pt-3 border-t border-slate-100 flex flex-col gap-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
                           <button
                             type="button"
-                            onClick={() => handleOpenScheduleModal(null, exam.id)}
-                            className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-bold rounded-lg transition-colors flex items-center gap-1"
+                            onClick={() => {
+                              setSelectedExamId(exam.id);
+                              if (exam.class_id) setSelectedClassId(exam.class_id);
+                              setActiveTab('schedules');
+                            }}
+                            className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 py-1"
                           >
-                            <Plus size={12} />
-                            <span>{isBn ? 'রুটিন তৈরি' : '+ Routine'}</span>
+                            <span>{isBn ? 'রুটিন দেখুন' : 'View Routine'}</span>
+                            <ChevronRight size={14} />
                           </button>
+
+                          {isAdmin && (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenScheduleModal(null, exam.id)}
+                              className="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 text-[11px] font-bold rounded-lg transition-colors flex items-center gap-1"
+                            >
+                              <Plus size={12} />
+                              <span>{isBn ? 'রুটিন তৈরি' : '+ Routine'}</span>
+                            </button>
+                          )}
+                        </div>
+
+                        {isAdmin && (
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleOpenExamModal(exam)}
+                              className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                              title="Edit Exam"
+                            >
+                              <Edit size={15} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteExam(exam.id)}
+                              className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
+                              title="Delete Exam"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
                         )}
                       </div>
 
                       {isAdmin && (
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={() => handleOpenExamModal(exam)}
-                            className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                            title="Edit Exam"
-                          >
-                            <Edit size={15} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteExam(exam.id)}
-                            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors"
-                            title="Delete Exam"
-                          >
-                            <Trash2 size={15} />
-                          </button>
+                        <div className="pt-1">
+                          {exam.is_published ? (
+                            <button
+                              type="button"
+                              disabled={publishingExam}
+                              onClick={() => handlePublishExam(exam.id, false)}
+                              className="w-full py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-emerald-50 hover:bg-amber-50 text-emerald-800 hover:text-amber-800 border border-emerald-300 hover:border-amber-300 shadow-2xs cursor-pointer"
+                              title={isBn ? 'ক্লিক করে ড্রাফট করুন' : 'Click to unpublish'}
+                            >
+                              <CheckCircle2 size={14} className="text-emerald-600" />
+                              <span>{isBn ? '✓ প্রকাশিত (Published) • ড্রাফট করতে ক্লিক করুন' : '✓ Published (Click to Unpublish)'}</span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled={publishingExam}
+                              onClick={() => handlePublishExam(exam.id, true)}
+                              className="w-full py-2 px-3 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs hover:shadow-md active:scale-[0.99] cursor-pointer"
+                              title={isBn ? 'শিক্ষার্থীদের জন্য এই পরীক্ষার রুটিন প্রকাশ করুন' : 'Publish this routine to student portal'}
+                            >
+                              <CheckCircle2 size={15} />
+                              <span>{isBn ? '🚀 রুটিন প্রকাশ করুন (Publish Routine)' : '🚀 Publish Routine to Students'}</span>
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -553,6 +678,84 @@ export default function ExamsManagementPage() {
       {/* ========================================================================= */}
       {activeTab === 'schedules' && (
         <div className="space-y-6">
+          {/* Exam Publishing Status Banner */}
+          {(() => {
+            const currentExam = exams.find(e => e.id === selectedExamId);
+            if (!currentExam) return null;
+            return (
+              <div className={`p-4 sm:p-5 rounded-3xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs transition-all ${
+                currentExam.is_published
+                  ? 'bg-emerald-50/90 border-emerald-200 text-emerald-950'
+                  : 'bg-amber-50/90 border-amber-200 text-amber-950'
+              }`}>
+                <div className="flex items-start sm:items-center gap-3.5">
+                  <div className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 shadow-xs ${
+                    currentExam.is_published ? 'bg-emerald-600 text-white' : 'bg-amber-500 text-white'
+                  }`}>
+                    {currentExam.is_published ? <CheckCircle2 size={22} /> : <AlertCircle size={22} />}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-extrabold text-sm sm:text-base">{currentExam.name}</h3>
+                      <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-md bg-white/60">
+                        {currentExam.academic_year} • {currentExam.term}
+                      </span>
+                      {currentExam.class_name ? (
+                        <span className="text-xs font-bold px-2.5 py-0.5 rounded-md bg-indigo-100 text-indigo-850 border border-indigo-200">
+                          🎯 {isBn ? 'শ্রেণি:' : 'Class:'} {currentExam.class_name}
+                        </span>
+                      ) : (
+                        <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-white/70 text-slate-700 border border-slate-200">
+                          🌐 {isBn ? 'সকল শ্রেণি' : 'All Classes'}
+                        </span>
+                      )}
+                      <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${
+                        currentExam.is_published
+                          ? 'bg-emerald-100 text-emerald-800 border-emerald-300'
+                          : 'bg-amber-100 text-amber-800 border-amber-300'
+                      }`}>
+                        {currentExam.is_published ? (isBn ? '✓ প্রকাশিত (Published)' : '✓ Published') : (isBn ? '⚠️ ড্রাফট (Draft)' : '⚠️ Draft')}
+                      </span>
+                    </div>
+                    <p className="text-xs mt-1 text-slate-600 max-w-2xl leading-relaxed">
+                      {currentExam.is_published
+                        ? (isBn
+                            ? 'এই পরীক্ষার রুটিনটি বর্তমানে প্রকাশিত রয়েছে। সংশ্লিষ্ট সকল শ্রেণির শিক্ষার্থীদের নিজস্ব পোর্টালে এই সময়সূচী ও নোটিফিকেশন পৌঁছে গেছে।'
+                            : 'This exam timetable is officially published and live on the student portal for all enrolled classes.')
+                        : (isBn
+                            ? 'এই পরীক্ষার রুটিন এখনো ড্রাফট অবস্থায় রয়েছে। শিক্ষার্থীদের পোর্টালে সময়সূচী পৌঁছানোর জন্য পাশের "রুটিন প্রকাশ করুন" বাটনে চাপুন।'
+                            : 'This timetable is currently in draft mode. Click "Publish Routine" to make it live for students in their portal.')}
+                    </p>
+                  </div>
+                </div>
+
+                {isAdmin && (
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      disabled={publishingExam}
+                      onClick={() => handlePublishExam(currentExam.id, !currentExam.is_published)}
+                      className={`px-4 py-2.5 rounded-xl text-xs font-bold transition-all flex items-center gap-2 shadow-xs ${
+                        currentExam.is_published
+                          ? 'bg-white hover:bg-slate-100 text-slate-700 border border-slate-300'
+                          : 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
+                      }`}
+                    >
+                      {currentExam.is_published ? (
+                        <span>{isBn ? 'ড্রাফট হিসেবে রাখুন' : 'Set to Draft'}</span>
+                      ) : (
+                        <>
+                          <CheckCircle2 size={15} />
+                          <span>{isBn ? '🚀 রুটিন প্রকাশ করুন (Publish)' : '🚀 Publish Routine to Students'}</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })()}
+
           {/* Schedule Filters Header */}
           <div className="bg-white p-4 sm:p-5 rounded-3xl border border-slate-200/80 shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-4">
             <div className="flex flex-wrap items-center gap-3 flex-1">
@@ -591,7 +794,7 @@ export default function ExamsManagementPage() {
             <div className="flex items-center gap-2">
               <button
                 type="button"
-                onClick={() => window.print()}
+                onClick={handlePrintRoutine}
                 className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors flex items-center gap-1.5"
               >
                 <Printer size={15} />
@@ -861,6 +1064,29 @@ export default function ExamsManagementPage() {
 
               <div>
                 <label className="block font-semibold text-slate-700 mb-1">
+                  {isBn ? 'লক্ষ্য শ্রেণি (Target Class)' : 'Target Class'}
+                </label>
+                <select
+                  value={examForm.class_id}
+                  onChange={(e) => setExamForm({ ...examForm, class_id: e.target.value })}
+                  className="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs bg-white font-medium focus:outline-hidden focus:border-blue-600"
+                >
+                  <option value="">{isBn ? '🌐 সকল শ্রেণি (All Classes)' : '🌐 All Classes'}</option>
+                  {classes.map(c => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  {isBn
+                    ? 'নির্দিষ্ট শ্রেণির পরীক্ষা হলে শ্রেণিটি বেছে নিন। পুরো প্রতিষ্ঠানের সকল শ্রেণির জন্য হলে "সকল শ্রেণি" রাখুন।'
+                    : 'Choose a class if this exam is specific to one class, or keep "All Classes" for institution-wide exams.'}
+                </p>
+              </div>
+
+              <div>
+                <label className="block font-semibold text-slate-700 mb-1">
                   {isBn ? 'বর্ণনা বা নির্দেশনা (ঐচ্ছিক)' : 'Description or Instructions'}
                 </label>
                 <textarea
@@ -870,6 +1096,29 @@ export default function ExamsManagementPage() {
                   placeholder={isBn ? 'পরীক্ষা সংক্রান্ত বিশেষ নির্দেশনা...' : 'Optional notes...'}
                   className="w-full px-3 py-2 border border-slate-200 rounded-xl text-xs focus:outline-hidden focus:border-blue-600"
                 />
+              </div>
+
+              <div className="p-3.5 bg-emerald-50/80 border border-emerald-200 rounded-2xl flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
+                    <CheckCircle2 size={15} className="text-emerald-600" />
+                    <span>{isBn ? '🚀 তৈরির সাথে সাথে প্রকাশ করুন (Publish Now)' : '🚀 Publish Immediately'}</span>
+                  </p>
+                  <p className="text-[11px] text-emerald-700 mt-0.5">
+                    {isBn
+                      ? 'চেক করলে পরীক্ষাটি অবিলম্বে প্রকাশিত হবে এবং শিক্ষার্থীদের পোর্টালে দৃশ্যমান হবে।'
+                      : 'If checked, this exam will be live immediately for students.'}
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer shrink-0">
+                  <input
+                    type="checkbox"
+                    checked={examForm.is_published}
+                    onChange={(e) => setExamForm({ ...examForm, is_published: e.target.checked })}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-slate-200 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-600"></div>
+                </label>
               </div>
 
               <div className="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
