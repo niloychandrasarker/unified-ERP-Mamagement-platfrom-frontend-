@@ -10,8 +10,9 @@ import {
   Briefcase, BookOpen, Users, ClipboardCheck, Edit3, Calendar,
   Bell, Building2, MapPin, Mail, Phone, Clock, ArrowRight,
   ShieldCheck, CheckCircle2, AlertCircle, Sparkles, ChevronRight,
-  Award, CheckCircle, BarChart3, TrendingUp
+  Award, CheckCircle, BarChart3, TrendingUp, GraduationCap
 } from 'lucide-react';
+import CampusLogo from '@/components/common/CampusLogo';
 
 export default function TeacherPortalDashboard() {
   const { user } = useAuth();
@@ -67,62 +68,133 @@ export default function TeacherPortalDashboard() {
 
   return (
     <div className="space-y-6 pb-12 font-sans">
-      {/* 1. Teacher Profile Header */}
-      <div className="bg-gradient-to-r from-purple-950 via-indigo-950 to-slate-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+      {/* 1. Institutional Hero Campus Banner */}
+      <div className="bg-gradient-to-r from-purple-950 via-indigo-950 to-slate-950 rounded-3xl text-white shadow-xl relative overflow-hidden border border-purple-900/40">
+        {/* If banner_url exists, render as full-bleed backdrop with dark overlay */}
+        {institution?.banner_url && (
+          <div className="absolute inset-0 z-0">
+            <img 
+              src={institution.banner_url} 
+              alt={institution?.name || 'Campus Banner'} 
+              className="w-full h-full object-cover object-center opacity-30"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-purple-950/85 to-indigo-950/90" />
+          </div>
+        )}
+
         <div className="absolute -right-10 -bottom-10 w-72 h-72 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute top-0 right-1/4 w-48 h-48 bg-indigo-500/15 rounded-full blur-2xl pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex items-center gap-5">
-            {/* Teacher Avatar */}
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white/10 border-2 border-white/40 flex items-center justify-center font-black text-3xl text-purple-300 shadow-xl backdrop-blur-md shrink-0">
-              {teacher.name?.charAt(0) || 'T'}
+        <div className="relative z-10 p-6 sm:p-8 space-y-6">
+          {/* Top Institution Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-white/15 gap-4">
+            <div className="flex items-center gap-3.5">
+              <CampusLogo logo={institution?.logo} name={institution?.name} size="lg" className="border-2 border-white/50 shadow-md" />
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base sm:text-lg font-black tracking-tight text-white leading-tight">
+                    {institution?.name || 'Unified Education Management Platform'}
+                  </h2>
+                  <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                    <CheckCircle2 size={10} />
+                    Verified Campus
+                  </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-2 text-[11px] text-purple-200/80 mt-0.5">
+                  {institution?.address && (
+                    <span className="flex items-center gap-1">
+                      <MapPin size={11} className="text-purple-400 shrink-0" />
+                      {institution.address}
+                    </span>
+                  )}
+                  {institution?.eiin_number && (
+                    <>
+                      <span>•</span>
+                      <span>EIIN: {institution.eiin_number}</span>
+                    </>
+                  )}
+                  <span>•</span>
+                  <span className="text-emerald-300 font-semibold">Session: 2026-2027</span>
+                </div>
+              </div>
             </div>
 
-            <div className="space-y-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-purple-500/30 text-purple-200 border border-purple-400/30">
-                  {teacher.designation || (isBn ? 'শিক্ষক ও অনুষদ সদস্য' : 'Faculty Member')}
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  Session: 2026
-                </span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-                {teacher.name}
-              </h1>
-              <div className="flex flex-wrap items-center gap-3 text-xs text-purple-200">
-                <span className="flex items-center gap-1 font-mono">
-                  <Mail size={13} className="text-purple-400" />
-                  {teacher.email}
-                </span>
-                {teacher.phone && (
-                  <>
-                    <span>•</span>
-                    <span className="flex items-center gap-1 font-mono">
-                      <Phone size={13} className="text-emerald-400" />
-                      {teacher.phone}
-                    </span>
-                  </>
-                )}
-                <span>•</span>
-                <span className="flex items-center gap-1">
-                  <Building2 size={13} className="text-blue-400" />
-                  {institution.name || 'My Institution'}
-                </span>
-              </div>
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <span className="px-3 py-1 rounded-full text-xs font-bold bg-purple-500/30 text-purple-200 border border-purple-400/30 flex items-center gap-1.5 shadow-xs">
+                <Briefcase size={14} />
+                {isBn ? 'শিক্ষক ও অনুষদ পোর্টাল' : 'Faculty & Staff Portal'}
+              </span>
             </div>
           </div>
 
-          {/* Teacher Quick Stats */}
-          <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 p-3 rounded-2xl shrink-0">
-            <div className="text-center px-4 border-r border-white/10">
-              <p className="text-[10px] uppercase font-bold text-purple-200">{isBn ? 'বরাদ্দকৃত বিষয়' : 'Courses'}</p>
-              <p className="text-2xl font-black text-white">{assignedSubjects.length}</p>
+          {/* Teacher Profile & Quick Metrics */}
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="flex items-center gap-5">
+              {/* Teacher Avatar */}
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white/10 border-2 border-white/40 flex items-center justify-center font-black text-3xl text-purple-300 shadow-xl backdrop-blur-md shrink-0 overflow-hidden">
+                {teacher.avatar_url ? (
+                  <img src={teacher.avatar_url} alt={teacher.name} className="w-full h-full object-cover" />
+                ) : (
+                  <span>{teacher.name?.charAt(0) || 'T'}</span>
+                )}
+              </div>
+
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-purple-500/30 text-purple-200 border border-purple-400/30">
+                    {teacher.designation || (isBn ? 'সহকারী শিক্ষক' : 'Assistant Teacher')}
+                  </span>
+                  {teacher.additional_designation && (
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-amber-500/30 text-amber-200 border border-amber-400/30 flex items-center gap-1">
+                      <Sparkles size={11} />
+                      {teacher.additional_designation}
+                    </span>
+                  )}
+                  {teacher.department && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-blue-500/20 text-blue-200 border border-blue-400/20">
+                      {teacher.department}
+                    </span>
+                  )}
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+                  {teacher.name}
+                </h1>
+                <div className="flex flex-wrap items-center gap-3 text-xs text-purple-200">
+                  <span className="flex items-center gap-1 font-mono">
+                    <Mail size={13} className="text-purple-400" />
+                    {teacher.email}
+                  </span>
+                  {teacher.phone && (
+                    <>
+                      <span>•</span>
+                      <span className="flex items-center gap-1 font-mono">
+                        <Phone size={13} className="text-emerald-400" />
+                        {teacher.phone}
+                      </span>
+                    </>
+                  )}
+                  {teacher.employee_id && (
+                    <>
+                      <span>•</span>
+                      <span className="font-mono bg-white/10 px-2 py-0.5 rounded text-[11px]">
+                        ID: {teacher.employee_id}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="text-center px-4">
-              <p className="text-[10px] uppercase font-bold text-purple-200">{isBn ? 'মোট শিক্ষার্থী' : 'Students'}</p>
-              <p className="text-2xl font-black text-emerald-400">{totalStudents}</p>
+
+            {/* Teacher Quick Stats */}
+            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 p-3 rounded-2xl shrink-0">
+              <div className="text-center px-4 border-r border-white/10">
+                <p className="text-[10px] uppercase font-bold text-purple-200">{isBn ? 'বরাদ্দকৃত বিষয়' : 'Courses'}</p>
+                <p className="text-2xl font-black text-white">{assignedSubjects.length}</p>
+              </div>
+              <div className="text-center px-4">
+                <p className="text-[10px] uppercase font-bold text-purple-200">{isBn ? 'মোট শিক্ষার্থী' : 'Students'}</p>
+                <p className="text-2xl font-black text-emerald-400">{totalStudents}</p>
+              </div>
             </div>
           </div>
         </div>

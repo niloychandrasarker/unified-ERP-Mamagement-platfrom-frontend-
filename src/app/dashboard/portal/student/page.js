@@ -13,6 +13,7 @@ import {
   DollarSign, Sparkles, X, ChevronRight, Wallet, Coffee
 } from 'lucide-react';
 import { printExamRoutine, printClassRoutine } from '@/lib/printRoutine';
+import CampusLogo from '@/components/common/CampusLogo';
 
 const DAYS_OF_WEEK = [
   { key: 'SUNDAY', en: 'Sunday', bn: 'রবিবার' },
@@ -226,68 +227,124 @@ function StudentPortalContent() {
 
   return (
     <div className="space-y-6 pb-12 font-sans">
-      {/* 1. Student Identity Header Banner */}
-      <div className="bg-gradient-to-r from-blue-900 via-indigo-900 to-slate-900 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
+      {/* 1. Institutional Hero Campus Banner */}
+      <div className="bg-gradient-to-r from-blue-950 via-indigo-950 to-slate-950 rounded-3xl text-white shadow-xl relative overflow-hidden border border-blue-900/40">
+        {/* If banner_url exists, render as cover background with sleek gradient overlay */}
+        {user?.institution?.banner_url && (
+          <div className="absolute inset-0 z-0">
+            <img 
+              src={user.institution.banner_url} 
+              alt={user.institution?.name || 'Campus Banner'} 
+              className="w-full h-full object-cover object-center opacity-30"
+            />
+            <div className="absolute inset-0 bg-gradient-to-r from-slate-950/95 via-indigo-950/85 to-blue-950/90" />
+          </div>
+        )}
+
         <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute top-0 right-1/3 w-48 h-48 bg-indigo-500/20 rounded-full blur-2xl pointer-events-none" />
 
-        <div className="relative z-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
-          <div className="flex items-center gap-5">
-            {/* Student Photo */}
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white p-1 shadow-lg border-2 border-white/60 shrink-0 overflow-hidden flex items-center justify-center">
-              {student.photo_url ? (
-                <img src={student.photo_url} alt={student.name} className="w-full h-full object-cover rounded-xl" />
-              ) : (
-                <div className="w-full h-full bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-2xl sm:text-3xl">
-                  {student.name?.charAt(0) || 'S'}
+        <div className="relative z-10 p-6 sm:p-8 space-y-6">
+          {/* Top Institution Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-5 border-b border-white/15 gap-4">
+            <div className="flex items-center gap-3.5">
+              <CampusLogo logo={user?.institution?.logo} name={user?.institution?.name} size="lg" className="border-2 border-white/50 shadow-md" />
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base sm:text-lg font-black tracking-tight text-white leading-tight">
+                    {user?.institution?.name || 'Unified Education Management Platform'}
+                  </h2>
+                  <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-400/30">
+                    <CheckCircle2 size={10} />
+                    Verified Campus
+                  </span>
                 </div>
-              )}
+                <div className="flex flex-wrap items-center gap-2 text-[11px] text-blue-200/80 mt-0.5">
+                  {user?.institution?.address && (
+                    <span className="flex items-center gap-1">
+                      <MapPin size={11} className="text-blue-400 shrink-0" />
+                      {user.institution.address}
+                    </span>
+                  )}
+                  {user?.institution?.eiin_number && (
+                    <>
+                      <span>•</span>
+                      <span>EIIN: {user.institution.eiin_number}</span>
+                    </>
+                  )}
+                  <span>•</span>
+                  <span className="text-emerald-300 font-semibold">Session: 2026-2027</span>
+                </div>
+              </div>
             </div>
 
-            {/* Student Details */}
-            <div className="space-y-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-blue-500/30 text-blue-200 border border-blue-400/30">
-                  {isBn ? 'শিক্ষার্থী প্রোফাইল' : 'Student Self-Service'}
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-                  {student.academic_year || '2026'}
-                </span>
-              </div>
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
-                {student.name}
-              </h1>
-              <div className="flex flex-wrap items-center gap-3 text-xs text-blue-200">
-                <span className="font-mono bg-white/10 px-2 py-0.5 rounded font-bold">
-                  ID: {student.student_id}
-                </span>
-                <span>•</span>
-                <span className="font-semibold">
-                  {student.class_name} {student.section_name ? `(${student.section_name})` : ''}
-                </span>
-                <span>•</span>
-                <span>{isBn ? 'রোল' : 'Roll'}: {student.roll_number || '—'}</span>
-                {student.blood_group && (
-                  <>
-                    <span>•</span>
-                    <span className="text-red-300 font-bold">{student.blood_group}</span>
-                  </>
-                )}
-              </div>
+            <div className="flex items-center gap-2 self-start sm:self-auto">
+              <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-500/30 text-blue-200 border border-blue-400/30 flex items-center gap-1.5 shadow-xs">
+                <GraduationCap size={14} />
+                {isBn ? 'শিক্ষার্থী পোর্টাল' : 'Student Portal'}
+              </span>
             </div>
           </div>
 
-          {/* Quick Stats Pill */}
-          <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 p-3 rounded-2xl shrink-0">
-            <div className="text-center px-3 border-r border-white/10">
-              <p className="text-[10px] uppercase font-bold text-blue-200">{isBn ? 'উপস্থিতি' : 'Attendance'}</p>
-              <p className="text-xl font-black text-emerald-400">{attStats.percentage}%</p>
+          {/* Student Profile Identity Section */}
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="flex items-center gap-5">
+              {/* Student Photo */}
+              <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-white p-1 shadow-xl border-2 border-white/60 shrink-0 overflow-hidden flex items-center justify-center">
+                {student.photo_url ? (
+                  <img src={student.photo_url} alt={student.name} className="w-full h-full object-cover rounded-xl" />
+                ) : (
+                  <div className="w-full h-full bg-blue-600 rounded-xl flex items-center justify-center text-white font-black text-2xl sm:text-3xl">
+                    {student.name?.charAt(0) || 'S'}
+                  </div>
+                )}
+              </div>
+
+              {/* Student Details */}
+              <div className="space-y-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold bg-white/10 text-blue-200 border border-white/20">
+                    {isBn ? 'স্বাগতম' : 'Welcome back'}
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] sm:text-xs font-medium bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                    {student.academic_year || '2026'}
+                  </span>
+                </div>
+                <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+                  {student.name}
+                </h1>
+                <div className="flex flex-wrap items-center gap-3 text-xs text-blue-200">
+                  <span className="font-mono bg-white/10 px-2 py-0.5 rounded font-bold">
+                    ID: {student.student_id}
+                  </span>
+                  <span>•</span>
+                  <span className="font-semibold">
+                    {student.class_name} {student.section_name ? `(${student.section_name})` : ''}
+                  </span>
+                  <span>•</span>
+                  <span>{isBn ? 'রোল' : 'Roll'}: {student.roll_number || '—'}</span>
+                  {student.blood_group && (
+                    <>
+                      <span>•</span>
+                      <span className="text-red-300 font-bold">{student.blood_group}</span>
+                    </>
+                  )}
+                </div>
+              </div>
             </div>
-            <div className="text-center px-3">
-              <p className="text-[10px] uppercase font-bold text-blue-200">{isBn ? 'বকেয়া ফি' : 'Dues'}</p>
-              <p className={`text-xl font-black ${Number(fees.total_due) > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
-                ৳{Number(fees.total_due).toLocaleString()}
-              </p>
+
+            {/* Quick Stats Pill */}
+            <div className="flex items-center gap-3 bg-white/10 backdrop-blur-md border border-white/20 p-3 rounded-2xl shrink-0">
+              <div className="text-center px-3 border-r border-white/10">
+                <p className="text-[10px] uppercase font-bold text-blue-200">{isBn ? 'উপস্থিতি' : 'Attendance'}</p>
+                <p className="text-xl font-black text-emerald-400">{attStats.percentage}%</p>
+              </div>
+              <div className="text-center px-3">
+                <p className="text-[10px] uppercase font-bold text-blue-200">{isBn ? 'বকেয়া ফি' : 'Dues'}</p>
+                <p className={`text-xl font-black ${Number(fees.total_due) > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
+                  ৳{Number(fees.total_due).toLocaleString()}
+                </p>
+              </div>
             </div>
           </div>
         </div>

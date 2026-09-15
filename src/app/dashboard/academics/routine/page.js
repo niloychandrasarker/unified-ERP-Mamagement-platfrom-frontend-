@@ -37,8 +37,10 @@ const DEFAULT_PERIODS = [
 export default function RoutinePage() {
   const { lang } = useLanguage();
   const isBn = lang === 'bn';
-  const { user } = useAuth();
-  const isAdmin = user?.role === 'INSTITUTION_ADMIN' || user?.role === 'SUPER_ADMIN';
+  const userPerms = Array.isArray(user?.permissions)
+    ? user.permissions
+    : (typeof user?.permissions === 'string' ? JSON.parse(user?.permissions || '[]') : []);
+  const isAdmin = user?.role === 'INSTITUTION_ADMIN' || user?.role === 'SUPER_ADMIN' || userPerms.includes('academic.routine');
   const isStudent = user?.role === 'STUDENT';
 
   // Customizable Periods State

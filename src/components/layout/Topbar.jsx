@@ -11,6 +11,7 @@ import {
   Award, CreditCard, AlertTriangle, ClipboardCheck,
   CheckCheck, Clock, ExternalLink
 } from 'lucide-react';
+import CampusLogo from '@/components/common/CampusLogo';
 
 function NotificationMenu({ isBn }) {
   const [open, setOpen] = useState(false);
@@ -250,22 +251,33 @@ export default function Topbar({ onMenuClick }) {
           </div>
         )}
 
-        {isInstAdmin && (
-          <div className="hidden lg:flex items-center space-x-4 flex-1">
-            <div className="flex items-center bg-blue-50 text-blue-700 px-3 py-1.5 rounded-full text-xs font-bold border border-blue-100">
-              Session: 2026-2027
+        {!isSuperAdmin && (
+          <div className="flex items-center gap-3 min-w-0 flex-1">
+            <CampusLogo logo={user.institution?.logo} name={user.institution?.name} size="sm" />
+            <div className="min-w-0">
+              <p className="text-xs font-black text-slate-900 leading-tight truncate max-w-[180px] sm:max-w-xs md:max-w-md">
+                {user.institution?.name || 'Unified Education Management Platform'}
+              </p>
+              <div className="flex items-center gap-1.5 mt-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span className="text-[10px] font-bold text-slate-500 truncate">
+                  {user.role === 'STUDENT'
+                    ? (isBn ? 'শিক্ষার্থী পোর্টাল' : 'Student Portal')
+                    : user.role === 'TEACHER'
+                    ? (isBn ? 'অনুষদ ও স্টাফ পোর্টাল' : 'Faculty & Staff Portal')
+                    : (isBn ? 'প্রতিষ্ঠান প্রশাসন' : 'Campus Administration')}
+                </span>
+                <span className="hidden sm:inline-block text-[10px] text-slate-300">•</span>
+                <span className="hidden sm:inline-block text-[10px] text-slate-400 font-mono">
+                  Session: 2026-2027
+                </span>
+              </div>
             </div>
-            <div className="flex items-center bg-green-50 text-green-700 px-3 py-1.5 rounded-full text-xs font-bold border border-green-100">
-              <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-              99.9% Synced
-            </div>
-            <div className="flex-1 max-w-xs items-center bg-gray-50 rounded-lg px-3 py-1.5 border border-gray-200 flex focus-within:ring-2 focus-within:ring-blue-500 focus-within:bg-white transition-all">
-              <input
-                type="text"
-                placeholder={isBn ? 'শিক্ষার্থী খুঁজুন 🔍' : 'Search student 🔍'}
-                className="bg-transparent border-none outline-hidden w-full text-sm text-gray-700"
-              />
-            </div>
+            {isInstAdmin && (
+              <div className="hidden xl:flex items-center bg-emerald-50 text-emerald-700 px-2.5 py-1 rounded-full text-[10px] font-bold border border-emerald-200 ml-2">
+                ● 99.9% Synced
+              </div>
+            )}
           </div>
         )}
       </div>

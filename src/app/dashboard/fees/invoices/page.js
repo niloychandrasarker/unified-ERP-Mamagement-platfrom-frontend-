@@ -25,6 +25,7 @@ import {
   Receipt,
   X
 } from 'lucide-react';
+import { printFeeInvoice } from '@/lib/printRoutine';
 
 export default function InvoicesPage() {
   const { user } = useAuth();
@@ -560,7 +561,7 @@ export default function InvoicesPage() {
       {/* MODAL: SINGLE INVOICE VOUCHER VIEW */}
       {selectedInvoice && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-5">
+          <div id="printable-invoice" className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-5">
             {/* Header */}
             <div className="flex items-start justify-between border-b border-slate-100 pb-4">
               <div>
@@ -630,11 +631,18 @@ export default function InvoicesPage() {
               <div>{getStatusBadge(selectedInvoice.status)}</div>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => window.print()}
+                  onClick={() => {
+                    if (!selectedInvoice) return;
+                    printFeeInvoice({
+                      invoice: selectedInvoice,
+                      institution: user?.institution,
+                      isBn
+                    });
+                  }}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl transition-colors"
                 >
                   <Printer size={14} />
-                  Print
+                  {isBn ? 'ইনভয়েস প্রিন্ট' : 'Print Invoice'}
                 </button>
                 {!isStudent && selectedInvoice.status !== 'PAID' && (
                   <Link

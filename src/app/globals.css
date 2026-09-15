@@ -47,6 +47,7 @@
     print-color-adjust: exact;
   }
   .no-print,
+  button,
   nav,
   aside,
   header,
@@ -63,19 +64,32 @@
   .print-only {
     display: block !important;
   }
-  #printable-exam-routine {
+  /* Remove dark modal overlay backdrops in print */
+  .fixed.inset-0 {
+    position: static !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+  }
+  #printable-exam-routine,
+  #printable-money-receipt,
+  #printable-credential-slip,
+  #printable-invoice {
     position: static !important;
     width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
+    margin: 0 auto !important;
+    padding: 10px !important;
     box-shadow: none !important;
     background: #ffffff !important;
-    border: none !important;
+    border: 1.5px solid #000000 !important;
   }
   @page {
     margin: 10mm 12mm;
     size: A4 portrait;
   }
 }
+
 
 

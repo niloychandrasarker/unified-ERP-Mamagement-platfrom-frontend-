@@ -28,7 +28,8 @@ import {
   CheckCircle2,
   User,
   Clock,
-  Bell
+  Bell,
+  ShieldCheck
 } from 'lucide-react';
 
 function CampusLogo({ logo, name, size = 'sm' }) {
@@ -258,8 +259,9 @@ export default function Sidebar({ onClose }) {
 
             <div className="mb-5">
               <p className="px-3 text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">ADMINISTRATION</p>
+              <NavItem href="/dashboard/admin/access-control" icon={ShieldCheck} label="Access & Control (রোল ও পারমিশন)" active={pathname.includes('/access-control')} badge="NEW" />
+              <NavItem href="/dashboard/teachers" icon={Users} label="Teachers & Staff (শিক্ষক তালিকা)" active={pathname.includes('/teachers')} />
               <NavItem href="/dashboard/profile" icon={Settings} label="Campus Profile & Logo" active={pathname === '/dashboard/profile'} />
-              <NavItem href="/dashboard/teachers" icon={Users} label="Teachers & Staff (শিক্ষক ও স্টাফ)" active={pathname.includes('/teachers')} />
               <NavItem href="#" icon={ScrollText} label="Audit Logs" disabled badge="Soon" />
             </div>
           </div>
@@ -299,19 +301,28 @@ export default function Sidebar({ onClose }) {
       {isStudent && (
         <>
           <div className="p-5 border-b border-gray-100">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">U</div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 leading-tight">UEMP</h1>
-                <p className="text-[10px] text-blue-600 font-bold uppercase tracking-wider">Student Portal</p>
+            <div className="flex items-center space-x-2.5 min-w-0">
+              <CampusLogo logo={user.institution?.logo} name={user.institution?.name} size="lg" />
+              <div className="min-w-0 flex-1">
+                <h1 className="text-sm font-black tracking-tight text-gray-900 leading-tight truncate">
+                  {user.institution?.name || 'UEMP'}
+                </h1>
+                <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 inline-block mt-0.5">
+                  {lang === 'bn' ? 'শিক্ষার্থী পোর্টাল' : 'Student Portal'}
+                </span>
               </div>
             </div>
             <div className="mt-4 p-3 bg-blue-50/70 border border-blue-100 rounded-xl">
-              <p className="text-xs font-bold text-slate-800 truncate">{user.name}</p>
-              <p className="text-[11px] font-mono text-blue-700 mt-0.5">ID: {user.username || user.student?.student_id}</p>
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-bold text-slate-800 truncate">{user.name}</p>
+                <span className="text-[9px] font-mono font-bold bg-blue-100 text-blue-800 px-1.5 py-0.5 rounded">
+                  {user.student?.academic_year || '2026'}
+                </span>
+              </div>
+              <p className="text-[11px] font-mono text-blue-700 mt-0.5">ID: {user.username || user.student?.student_id || '—'}</p>
               {user.student?.class_name && (
-                <p className="text-[11px] text-slate-500 mt-0.5">
-                  {user.student.class_name} {user.student.section_name ? `• ${user.student.section_name}` : ''}
+                <p className="text-[11px] text-slate-500 mt-0.5 font-semibold">
+                  {user.student.class_name} {user.student.section_name ? `• ${user.student.section_name}` : ''} {user.student.roll_number ? `(Roll: ${user.student.roll_number})` : ''}
                 </p>
               )}
             </div>
@@ -403,19 +414,30 @@ export default function Sidebar({ onClose }) {
       {isTeacher && (
         <>
           <div className="p-5 border-b border-gray-100">
-            <div className="flex items-center space-x-2">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">U</div>
-              <div>
-                <h1 className="text-xl font-bold text-gray-900 leading-tight">UEMP</h1>
-                <p className="text-[10px] text-purple-600 font-bold uppercase tracking-wider">Teacher Portal</p>
+            <div className="flex items-center space-x-2.5 min-w-0">
+              <CampusLogo logo={user.institution?.logo} name={user.institution?.name} size="lg" />
+              <div className="min-w-0 flex-1">
+                <h1 className="text-sm font-black tracking-tight text-gray-900 leading-tight truncate">
+                  {user.institution?.name || 'UEMP'}
+                </h1>
+                <span className="text-[10px] font-bold text-purple-700 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-100 inline-block mt-0.5">
+                  {lang === 'bn' ? 'শিক্ষক ও স্টাফ পোর্টাল' : 'Faculty & Staff Portal'}
+                </span>
               </div>
             </div>
             <div className="mt-4 p-3 bg-purple-50/70 border border-purple-100 rounded-xl">
               <p className="text-xs font-bold text-slate-800 truncate">{user.name}</p>
               <p className="text-[11px] font-mono text-purple-700 mt-0.5 truncate">{user.email}</p>
-              <span className="inline-block mt-1 text-[9px] font-bold bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">
-                Faculty Member
-              </span>
+              <div className="flex flex-wrap items-center gap-1 mt-1.5">
+                <span className="text-[9px] font-bold bg-purple-100 text-purple-800 px-2 py-0.5 rounded-full">
+                  {user.designation || 'Faculty Member'}
+                </span>
+                {user.additional_designation && (
+                  <span className="text-[9px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-200">
+                    {user.additional_designation}
+                  </span>
+                )}
+              </div>
             </div>
           </div>
 
@@ -424,7 +446,56 @@ export default function Sidebar({ onClose }) {
             <NavItem href="/dashboard/exams/marks" icon={Edit3} label="Course Marks Entry" active={pathname.includes('/exams/marks')} />
             <NavItem href="/dashboard/exams" icon={Award} label="Exam Routines" active={pathname === '/dashboard/exams'} />
             <NavItem href="/dashboard/academics/attendance" icon={ClipboardCheck} label="Daily Attendance" active={pathname.includes('/academics/attendance')} />
-            <NavItem href="/dashboard/academics/routine" icon={Calendar} label="Class Timetable" active={pathname.includes('/academics/routine')} />
+            
+            {/* Special Permission-based Navigation for Teachers */}
+            {(() => {
+              const perms = Array.isArray(user?.permissions)
+                ? user.permissions
+                : (typeof user?.permissions === 'string' ? JSON.parse(user?.permissions || '[]') : []);
+              const isRoutineInCharge = perms.includes('academic.routine') || (user?.additional_designation && user.additional_designation.toLowerCase().includes('routine'));
+              const isResultInCharge = perms.includes('exams.publish') || (user?.additional_designation && user.additional_designation.toLowerCase().includes('exam'));
+              const isFeeInCharge = perms.includes('fees.collect');
+              const isAdmitInCharge = perms.includes('students.admit');
+
+              return (
+                <>
+                  <NavItem
+                    href="/dashboard/academics/routine"
+                    icon={Calendar}
+                    label={isRoutineInCharge ? "Class Routine (রুটিন কন্ট্রোল)" : "Class Timetable"}
+                    badge={isRoutineInCharge ? "Manager" : undefined}
+                    active={pathname.includes('/academics/routine')}
+                  />
+                  {isResultInCharge && (
+                    <NavItem
+                      href="/dashboard/exams/publish"
+                      icon={CheckCircle2}
+                      label="Result Publish (ফলাফল প্রকাশ)"
+                      badge="Special"
+                      active={pathname.includes('/exams/publish')}
+                    />
+                  )}
+                  {isFeeInCharge && (
+                    <NavItem
+                      href="/dashboard/fees/collect"
+                      icon={Wallet}
+                      label="Receive Fee (ফি গ্রহণ)"
+                      badge="Finance"
+                      active={pathname.includes('/fees/collect')}
+                    />
+                  )}
+                  {isAdmitInCharge && (
+                    <NavItem
+                      href="/dashboard/students/admit"
+                      icon={UserPlus}
+                      label="New Admission (ভর্তি)"
+                      active={pathname.includes('/students/admit')}
+                    />
+                  )}
+                </>
+              );
+            })()}
+
             <NavItem href="/dashboard/profile" icon={User} label="My Profile" active={pathname === '/dashboard/profile'} />
           </div>
 

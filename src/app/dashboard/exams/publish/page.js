@@ -40,7 +40,10 @@ export default function ResultPublicationPage() {
   const { lang } = useLanguage();
   const isBn = lang === 'bn';
 
-  const isPrincipal = user?.role === 'INSTITUTION_ADMIN' || user?.role === 'SUPER_ADMIN';
+  const userPerms = Array.isArray(user?.permissions)
+    ? user.permissions
+    : (typeof user?.permissions === 'string' ? JSON.parse(user?.permissions || '[]') : []);
+  const isPrincipal = user?.role === 'INSTITUTION_ADMIN' || user?.role === 'SUPER_ADMIN' || userPerms.includes('exams.publish');
 
   // Selection States
   const [classes, setClasses] = useState([]);

@@ -25,6 +25,7 @@ import {
   Sparkles,
   Receipt
 } from 'lucide-react';
+import { printMoneyReceipt } from '@/lib/printRoutine';
 
 export default function CollectFeesPage() {
   const searchParams = useSearchParams();
@@ -522,7 +523,15 @@ export default function CollectFeesPage() {
               </span>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => window.print()}
+                  onClick={() => {
+                    if (!receiptData) return;
+                    printMoneyReceipt({
+                      receipt: receiptData.receipt,
+                      allocatedInvoices: receiptData.allocated_invoices,
+                      totalRemainingDue: receiptData.total_remaining_due,
+                      isBn
+                    });
+                  }}
                   className="inline-flex items-center gap-1.5 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors"
                 >
                   <Printer size={14} />
